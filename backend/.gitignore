@@ -1,0 +1,91 @@
+.env
+uploads/
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# FastAPI / SQLAlchemy
+# =========================
+*.db
+*.sqlite3
+
+# =========================
+# Alembic
+# =========================
+alembic/versions/__pycache__/
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# VS Code
+# =========================
+.vscode/
+
+# =========================
+# PyCharm
+# =========================
+.idea/
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Testing / Coverage
+# =========================
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =========================
+# Build / Distribution
+# =========================
+build/
+dist/
+*.egg-info/
+
+# =========================
+# Mypy / Ruff / Cache
+# =========================
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# =========================
+# Node Modules (if frontend exists)
+# =========================
+node_modules/
+
+# =========================
+# Uploaded Files
+# =========================
+uploads/
+media/
+
+# =========================
+# Temporary Files
+# =========================
+*.tmp
+*.temp
