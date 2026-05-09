@@ -6,11 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
+from app.routers import auth
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create upload directory if it doesn't exist
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     yield
 
@@ -22,7 +22,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS — allow React frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -31,10 +30,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve uploaded resumes as static files
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.include_router(auth.router)
 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "message": "ResuMatch API is running"}
+    return {
+        "status": "ok",
+        "message": "ResuMatch API is running"
+    }
+
+
+# Always mount static files last
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
