@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.routers import auth, resume
+from app.routers import auth, resume, jobs
 
 
 @asynccontextmanager
@@ -32,7 +32,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(resume.router)
-
+app.include_router(jobs.router)
 @app.get("/health")
 async def health():
     return {
