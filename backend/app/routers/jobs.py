@@ -21,6 +21,13 @@ from app.schemas.job import (
 )
 from app.services.groq import extract_job_details
 from app.services.matcher import match_resume_to_job
+from app.schemas.job import (
+    JobCreate,
+    JobResponse,
+    JobListResponse,
+    JobStatusUpdate,
+    JobNotesUpdate
+)
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -250,5 +257,5 @@ async def delete_job(
         )
 
     from datetime import datetime, timezone
-    job.deleted_at = datetime.now(timezone.utc)
+    job.deleted_at = datetime.now(timezone.utc).replace(tzinfo=None)
     await db.commit()
