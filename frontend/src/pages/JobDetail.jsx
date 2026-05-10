@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getJob, updateJobStatus, updateJobNotes, deleteJob } from '../api/jobs'
+import { getJob, updateJobStatus, deleteJob } from '../api/jobs'
 
 const STATUS_OPTIONS = [
   { value: 'saved',     label: 'Saved',     color: 'bg-gray-100 text-gray-600 border-gray-200' },
@@ -59,11 +59,12 @@ export default function JobDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [notes, setNotes] = useState('')
-  const [notesSaved, setNotesSaved] = useState(false)
+
+  // All state declarations first
   const [visible, setVisible] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
+  // Visibility animation
   useEffect(() => {
     setTimeout(() => setVisible(true), 100)
   }, [])
@@ -74,9 +75,6 @@ export default function JobDetail() {
       const res = await getJob(id)
       return res.data
     },
-    onSuccess: (data) => {
-      setNotes(data.notes || '')
-    }
   })
 
   const statusMutation = useMutation({
@@ -87,18 +85,6 @@ export default function JobDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries(['job', id])
       queryClient.invalidateQueries(['jobs'])
-    }
-  })
-
-  const notesMutation = useMutation({
-    mutationFn: async (notes) => {
-      const res = await updateJobNotes(id, notes)
-      return res.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['job', id])
-      setNotesSaved(true)
-      setTimeout(() => setNotesSaved(false), 2000)
     }
   })
 
@@ -322,31 +308,6 @@ export default function JobDetail() {
               </div>
             </div>
           )}
-
-          {/* Notes */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">Notes</h2>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add notes about this application — recruiter name, interview tips, follow-up dates..."
-              rows={5}
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all duration-200 resize-none"
-            />
-            <div className="flex items-center justify-between mt-3">
-              {notesSaved && (
-                <span className="text-xs text-emerald-600 font-medium">✓ Notes saved</span>
-              )}
-              <button
-                onClick={() => notesMutation.mutate(notes)}
-                disabled={notesMutation.isPending}
-                className="ml-auto px-4 py-2 rounded-xl text-xs font-semibold text-white active:scale-95 transition-all duration-200 shadow-md shadow-emerald-500/20 disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
-              >
-                {notesMutation.isPending ? 'Saving...' : 'Save Notes'}
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Right column */}
