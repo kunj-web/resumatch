@@ -83,7 +83,7 @@ export default function AddJob() {
 
   return (
     <div
-      className="max-w-3xl mx-auto"
+      className="w-full max-w-4xl mx-auto"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(20px)',
