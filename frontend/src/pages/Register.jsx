@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import { register } from '../api/auth'
+import { validateEmail, getPasswordError } from '../utils/validation'
 
 export default function Register() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ full_name: '', email: '', password: '' })
+  const [form, setForm] = useState({ full_name: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -17,18 +18,56 @@ export default function Register() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    try {
-      await register(form)
+  const registerMutation = useMutation({
+    mutationFn: async (credentials) => {
+      const res = await register(credentials)
+      return res.data
+    },
+    onSuccess: () => {
       navigate('/login')
-    } catch (err) {
+    },
+    onError: (err) => {
       setError(err.response?.data?.detail || 'Something went wrong')
-    } finally {
-      setLoading(false)
     }
+  })
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setError('')
+
+    // Validation
+    if (!form.full_name.trim()) {
+      setError('Full name is required')
+      return
+    }
+    if (form.full_name.trim().length < 2) {
+      setError('Full name must be at least 2 characters')
+      return
+    }
+    if (!form.email.trim()) {
+      setError('Email is required')
+      return
+    }
+    if (!validateEmail(form.email)) {
+      setError('Please enter a valid email address')
+      return
+    }
+    
+    const passwordError = getPasswordError(form.password)
+    if (passwordError) {
+      setError(passwordError)
+      return
+    }
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
+    registerMutation.mutate({
+      full_name: form.full_name,
+      email: form.email.toLowerCase(),
+      password: form.password,
+    })
   }
 
   return (
@@ -245,7 +284,6 @@ export default function Register() {
                 name="full_name"
                 value={form.full_name}
                 onChange={handleChange}
-                required
                 placeholder="Kunj Bihari"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all duration-200 shadow-sm"
               />
@@ -260,7 +298,6 @@ export default function Register() {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                required
                 placeholder="you@example.com"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all duration-200 shadow-sm"
               />
@@ -275,7 +312,21 @@ export default function Register() {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                required
+                placeholder="••••••••"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all duration-200 shadow-sm"
+              />
+              <p className="text-xs text-gray-500 mt-1">Min 8 chars, 1 uppercase, 1 lowercase, 1 number</p>
+            </div>
+
+            <div className="stagger-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Confirm password
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={form.confirmPassword}
+                onChange={handleChange}
                 placeholder="••••••••"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all duration-200 shadow-sm"
               />
@@ -284,11 +335,11 @@ export default function Register() {
             <div className="stagger-5 pt-1">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={registerMutation.isPending}
                 className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
                 style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
               >
-                {loading ? (
+                {registerMutation.isPending ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
