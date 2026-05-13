@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import { login } from '../api/auth'
+import { validateEmail } from '../utils/validation'
 
 export default function Login() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -17,19 +18,39 @@ export default function Login() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    try {
-      const res = await login(form)
-      localStorage.setItem('access_token', res.data.access_token)
+  const loginMutation = useMutation({
+    mutationFn: async (credentials) => {
+      const res = await login(credentials)
+      return res.data
+    },
+    onSuccess: (data) => {
+      localStorage.setItem('access_token', data.access_token)
       navigate('/')
-    } catch (err) {
+    },
+    onError: (err) => {
       setError(err.response?.data?.detail || 'Invalid email or password')
-    } finally {
-      setLoading(false)
     }
+  })
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    setError('')
+
+    // Validation
+    if (!form.email.trim()) {
+      setError('Email is required')
+      return
+    }
+    if (!validateEmail(form.email)) {
+      setError('Please enter a valid email address')
+      return
+    }
+    if (!form.password) {
+      setError('Password is required')
+      return
+    }
+
+    loginMutation.mutate({ email: form.email.toLowerCase(), password: form.password })
   }
 
   return (
@@ -242,7 +263,6 @@ export default function Login() {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                required
                 placeholder="you@example.com"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all duration-200 shadow-sm"
               />
@@ -257,7 +277,6 @@ export default function Login() {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                required
                 placeholder="••••••••"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition-all duration-200 shadow-sm"
               />
@@ -266,11 +285,11 @@ export default function Login() {
             <div className="stagger-4 pt-1">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loginMutation.isPending}
                 className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
                 style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
               >
-                {loading ? (
+                {loginMutation.isPending ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
