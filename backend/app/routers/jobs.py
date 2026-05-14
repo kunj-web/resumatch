@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.core.ratelimit import check_rate_limit
+from fastapi import HTTPException, status
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
@@ -50,6 +52,14 @@ async def create_job(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    
+# Rate limit check
+    is_allowed, info = check_rate_limit(current_user.id, 'extract_job')
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many requests. You can make {info['limit']} extractions per hour. Try again in {info['retry_after']} seconds."
+        )
     # Must have either URL or raw description
     if not payload.source_url and not payload.raw_description:
         raise HTTPException(
