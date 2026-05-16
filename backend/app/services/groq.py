@@ -45,10 +45,10 @@ def _extract_sync(raw_text: str) -> dict:
         model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": EXTRACTION_PROMPT},
-            {"role": "user", "content": f"Job Description:\n{raw_text}"}
+            {"role": "user", "content": f"Job Description:\n{raw_text}"},
         ],
         temperature=0.1,
-        max_tokens=1000
+        max_tokens=1000,
     )
 
     content = response.choices[0].message.content.strip()

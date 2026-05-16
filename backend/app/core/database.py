@@ -3,14 +3,12 @@ from app.core.config import settings
 
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True,        # logs all SQL queries, turn off in production
-    future=True
+    echo=True,  # logs all SQL queries, turn off in production
+    future=True,
 )
 
 AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False
+    bind=engine, class_=AsyncSession, expire_on_commit=False
 )
 
 

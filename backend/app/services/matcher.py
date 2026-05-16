@@ -38,7 +38,9 @@ Rules:
 """
 
 
-def _match_sync(resume_text: str, required_skills: list, preferred_skills: list) -> dict:
+def _match_sync(
+    resume_text: str, required_skills: list, preferred_skills: list
+) -> dict:
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[
@@ -54,11 +56,11 @@ Required Skills:
 
 Preferred Skills:
 {json.dumps(preferred_skills)}
-"""
-            }
+""",
+            },
         ],
         temperature=0.1,
-        max_tokens=1000
+        max_tokens=1000,
     )
 
     content = response.choices[0].message.content.strip()
@@ -74,16 +76,10 @@ Preferred Skills:
 
 
 async def match_resume_to_job(
-    resume_text: str,
-    required_skills: list,
-    preferred_skills: list
+    resume_text: str, required_skills: list, preferred_skills: list
 ) -> dict:
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
-        None,
-        _match_sync,
-        resume_text,
-        required_skills,
-        preferred_skills
+        None, _match_sync, resume_text, required_skills, preferred_skills
     )
     return result

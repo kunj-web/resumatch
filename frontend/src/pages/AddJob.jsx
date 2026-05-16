@@ -1,100 +1,101 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createJob } from '../api/jobs'
-import { uploadResume, getMyResume } from '../api/resume'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createJob } from "../api/jobs";
+import { uploadResume, getMyResume } from "../api/resume";
 
 export default function AddJob() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [tab, setTab] = useState('url')
-  const [url, setUrl] = useState('')
-  const [description, setDescription] = useState('')
-  const [error, setError] = useState('')
-  const [visible, setVisible] = useState(false)
-  const [resumeFile, setResumeFile] = useState(null)
-  const [resumeSuccess, setResumeSuccess] = useState(false)
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [tab, setTab] = useState("url");
+  const [url, setUrl] = useState("");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const [visible, setVisible] = useState(false);
+  const [resumeFile, setResumeFile] = useState(null);
+  const [resumeSuccess, setResumeSuccess] = useState(false);
 
   useEffect(() => {
-    setTimeout(() => setVisible(true), 100)
-  }, [])
+    setTimeout(() => setVisible(true), 100);
+  }, []);
 
   const { data: resume } = useQuery({
-    queryKey: ['resume'],
+    queryKey: ["resume"],
     queryFn: async () => {
-      const res = await getMyResume()
-      return res.data
+      const res = await getMyResume();
+      return res.data;
     },
     retry: false,
-  })
+  });
 
   const uploadResumeMutation = useMutation({
     mutationFn: async (file) => {
-      const res = await uploadResume(file)
-      return res.data
+      const res = await uploadResume(file);
+      return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['resume'])
-      setResumeSuccess(true)
-      setResumeFile(null)
-      setTimeout(() => setResumeSuccess(false), 3000)
+      queryClient.invalidateQueries(["resume"]);
+      setResumeSuccess(true);
+      setResumeFile(null);
+      setTimeout(() => setResumeSuccess(false), 3000);
     },
-  })
+  });
 
   const createJobMutation = useMutation({
     mutationFn: async (data) => {
-      const res = await createJob(data)
-      return res.data
+      const res = await createJob(data);
+      return res.data;
     },
     onSuccess: (job) => {
-      queryClient.invalidateQueries(['jobs'])
-      navigate(`/jobs/${job.id}`)
+      queryClient.invalidateQueries(["jobs"]);
+      navigate(`/jobs/${job.id}`);
     },
     onError: (err) => {
-      setError(err.response?.data?.detail || 'Something went wrong')
-    }
-  })
+      setError(err.response?.data?.detail || "Something went wrong");
+    },
+  });
 
   const handleJobSubmit = (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
 
-    if (tab === 'url' && !url.trim()) {
-      setError('Please enter a job URL')
-      return
+    if (tab === "url" && !url.trim()) {
+      setError("Please enter a job URL");
+      return;
     }
-    if (tab === 'paste' && !description.trim()) {
-      setError('Please paste a job description')
-      return
+    if (tab === "paste" && !description.trim()) {
+      setError("Please paste a job description");
+      return;
     }
 
     createJobMutation.mutate(
-      tab === 'url'
+      tab === "url"
         ? { source_url: url.trim() }
-        : { raw_description: description.trim() }
-    )
-  }
+        : { raw_description: description.trim() },
+    );
+  };
 
   const handleResumeUpload = (e) => {
-    e.preventDefault()
-    if (!resumeFile) return
-    uploadResumeMutation.mutate(resumeFile)
-  }
+    e.preventDefault();
+    if (!resumeFile) return;
+    uploadResumeMutation.mutate(resumeFile);
+  };
 
   return (
     <div
       className="w-full max-w-4xl mx-auto"
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'all 0.5s ease-out',
+        transform: visible ? "translateY(0)" : "translateY(20px)",
+        transition: "all 0.5s ease-out",
       }}
     >
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Add a Job</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Paste a job URL or description and AI will extract everything automatically
+          Paste a job URL or description and AI will extract everything
+          automatically
         </p>
       </div>
 
@@ -106,7 +107,7 @@ export default function AddJob() {
             <p className="text-xs text-gray-500 mt-0.5">
               {resume
                 ? `Active: ${resume.file_name}`
-                : 'Upload your resume to get match scores'}
+                : "Upload your resume to get match scores"}
             </p>
           </div>
           {resume && (
@@ -119,11 +120,25 @@ export default function AddJob() {
 
         <form onSubmit={handleResumeUpload} className="flex items-center gap-3">
           <label className="flex-1 flex items-center gap-3 px-4 py-3 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition-all duration-200">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             <span className="text-sm text-gray-500">
-              {resumeFile ? resumeFile.name : resume ? 'Upload new resume (PDF)' : 'Choose PDF file'}
+              {resumeFile
+                ? resumeFile.name
+                : resume
+                  ? "Upload new resume (PDF)"
+                  : "Choose PDF file"}
             </span>
             <input
               type="file"
@@ -136,14 +151,31 @@ export default function AddJob() {
             type="submit"
             disabled={!resumeFile || uploadResumeMutation.isPending}
             className="px-4 py-3 rounded-xl text-sm font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all duration-200 shadow-md shadow-emerald-500/20"
-            style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+            style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
           >
             {uploadResumeMutation.isPending ? (
-              <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              <svg
+                className="animate-spin h-4 w-4 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                />
               </svg>
-            ) : 'Upload'}
+            ) : (
+              "Upload"
+            )}
           </button>
         </form>
 
@@ -161,21 +193,26 @@ export default function AddJob() {
 
       {/* Job Input Section */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-sm font-semibold text-gray-900 mb-4">Job Posting</h2>
+        <h2 className="text-sm font-semibold text-gray-900 mb-4">
+          Job Posting
+        </h2>
 
         {/* Tabs */}
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 w-fit">
           {[
-            { key: 'url', label: 'Paste URL' },
-            { key: 'paste', label: 'Paste Text' },
+            { key: "url", label: "Paste URL" },
+            { key: "paste", label: "Paste Text" },
           ].map((t) => (
             <button
               key={t.key}
-              onClick={() => { setTab(t.key); setError('') }}
+              onClick={() => {
+                setTab(t.key);
+                setError("");
+              }}
               className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-200 ${
                 tab === t.key
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               {t.label}
@@ -184,7 +221,7 @@ export default function AddJob() {
         </div>
 
         <form onSubmit={handleJobSubmit} className="space-y-4">
-          {tab === 'url' ? (
+          {tab === "url" ? (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Job post URL
@@ -225,20 +262,37 @@ export default function AddJob() {
             type="submit"
             disabled={createJobMutation.isPending}
             className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/25"
-            style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
+            style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
           >
             {createJobMutation.isPending ? (
               <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  />
                 </svg>
                 AI is extracting job details...
               </span>
-            ) : 'Extract & Save Job'}
+            ) : (
+              "Extract & Save Job"
+            )}
           </button>
         </form>
       </div>
     </div>
-  )
+  );
 }

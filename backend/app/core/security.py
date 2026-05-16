@@ -38,9 +38,7 @@ def create_refresh_token(user_id: str) -> str:
 def decode_token(token: str) -> Optional[str]:
     try:
         payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id: str = payload.get("sub")
         if user_id is None:
