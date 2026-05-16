@@ -19,7 +19,7 @@ from app.schemas.job import (
     JobResponse,
     JobListResponse,
     JobStatusUpdate,
-    JobNotesUpdate
+    JobNotesUpdate,
 )
 from app.services.groq import extract_job_details
 from app.services.matcher import match_resume_to_job
@@ -28,7 +28,7 @@ from app.schemas.job import (
     JobResponse,
     JobListResponse,
     JobStatusUpdate,
-    JobNotesUpdate
+    JobNotesUpdate,
 )
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -50,21 +50,21 @@ async def fetch_url_content(url: str) -> str:
 async def create_job(
     payload: JobCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
-    
-# Rate limit check
-    is_allowed, info = check_rate_limit(current_user.id, 'extract_job')
+
+    # Rate limit check
+    is_allowed, info = check_rate_limit(current_user.id, "extract_job")
     if not is_allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Too many requests. You can make {info['limit']} extractions per hour. Try again in {info['retry_after']} seconds."
+            detail=f"Too many requests. You can make {info['limit']} extractions per hour. Try again in {info['retry_after']} seconds.",
         )
     # Must have either URL or raw description
     if not payload.source_url and not payload.raw_description:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Provide either a job URL or paste the job description"
+            detail="Provide either a job URL or paste the job description",
         )
 
     raw_description = payload.raw_description
@@ -77,7 +77,7 @@ async def create_job(
             if not payload.raw_description:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail="Could not fetch the URL. Please paste the job description manually."
+                    detail="Could not fetch the URL. Please paste the job description manually.",
                 )
             raw_description = payload.raw_description
 
@@ -86,7 +86,7 @@ async def create_job(
         user_id=current_user.id,
         source_url=payload.source_url,
         raw_description=raw_description,
-        extraction_status=ExtractionStatus.PENDING
+        extraction_status=ExtractionStatus.PENDING,
     )
     db.add(job)
     await db.commit()
@@ -132,7 +132,7 @@ async def create_job(
             match = await match_resume_to_job(
                 resume_text=resume.raw_text,
                 required_skills=job.required_skills,
-                preferred_skills=job.preferred_skills
+                preferred_skills=job.preferred_skills,
             )
 
             job.match_score = match.get("match_score")
@@ -150,8 +150,7 @@ async def create_job(
 
 @router.get("/", response_model=list[JobListResponse])
 async def get_jobs(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(
         select(Job)
@@ -167,7 +166,7 @@ async def get_jobs(
 async def get_job(
     job_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(Job)
@@ -179,8 +178,7 @@ async def get_job(
 
     if not job:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
 
     return job
@@ -191,7 +189,7 @@ async def update_job_status(
     job_id: uuid.UUID,
     payload: JobStatusUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(Job)
@@ -203,8 +201,7 @@ async def update_job_status(
 
     if not job:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
 
     job.status = payload.status
@@ -212,6 +209,7 @@ async def update_job_status(
     # Auto set applied_at when status moves to applied
     if payload.status == JobStatus.APPLIED and not job.applied_at:
         from datetime import datetime, timezone
+
         job.applied_at = datetime.now(timezone.utc)
 
     await db.commit()
@@ -224,7 +222,7 @@ async def update_job_notes(
     job_id: uuid.UUID,
     payload: JobNotesUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(Job)
@@ -236,8 +234,7 @@ async def update_job_notes(
 
     if not job:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
 
     job.notes = payload.notes
@@ -250,7 +247,7 @@ async def update_job_notes(
 async def delete_job(
     job_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(Job)
@@ -262,10 +259,10 @@ async def delete_job(
 
     if not job:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Job not found"
         )
 
     from datetime import datetime, timezone
+
     job.deleted_at = datetime.now(timezone.utc).replace(tzinfo=None)
     await db.commit()

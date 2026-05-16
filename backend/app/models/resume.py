@@ -13,60 +13,39 @@ class Resume(Base):
     __tablename__ = "resumes"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
-        index=True
+        index=True,
     )
 
-    file_name: Mapped[str] = mapped_column(
-        String,
-        nullable=False
-    )
+    file_name: Mapped[str] = mapped_column(String, nullable=False)
 
     # Local filesystem path e.g. /uploads/resumes/<uuid>.pdf
-    file_path: Mapped[str] = mapped_column(
-        String,
-        nullable=False
-    )
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
 
     # Plain text extracted by pdfplumber on upload
-    raw_text: Mapped[str] = mapped_column(
-        Text,
-        nullable=False
-    )
+    raw_text: Mapped[str] = mapped_column(Text, nullable=False)
 
     # True = currently active resume used for matching
     # False = old resume, replaced by a newer upload
-    is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     processing_status: Mapped[ResumeProcessingStatus] = mapped_column(
         Enum(ResumeProcessingStatus),
         nullable=False,
-        default=ResumeProcessingStatus.UPLOADED
+        default=ResumeProcessingStatus.UPLOADED,
     )
 
-    uploaded_at: Mapped[datetime] = mapped_column(
-        server_default=func.now()
-    )
+    uploaded_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     updated_at: Mapped[datetime] = mapped_column(
-        server_default=func.now(),
-        onupdate=func.now()
+        server_default=func.now(), onupdate=func.now()
     )
 
     # Relationships
-    user: Mapped["User"] = relationship(
-        "User",
-        back_populates="resumes"
-    )
+    user: Mapped["User"] = relationship("User", back_populates="resumes")

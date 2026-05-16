@@ -8,5 +8,5 @@ class Token(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: str        # user id
-    exp: int        # expiry timestamp
+    sub: str  # user id
+    exp: int  # expiry timestamp

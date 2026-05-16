@@ -19,7 +19,7 @@ app = FastAPI(
     title="ResuMatch API",
     description="AI-powered job application tracker and resume matcher",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -33,12 +33,11 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(resume.router)
 app.include_router(jobs.router)
+
+
 @app.get("/health")
 async def health():
-    return {
-        "status": "ok",
-        "message": "ResuMatch API is running"
-    }
+    return {"status": "ok", "message": "ResuMatch API is running"}
 
 
 # Always mount static files last
