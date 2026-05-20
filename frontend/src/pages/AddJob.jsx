@@ -19,13 +19,16 @@ export default function AddJob() {
     setTimeout(() => setVisible(true), 100);
   }, []);
 
-  const { data: resume } = useQuery({
+  // Uses shared React Query cache — same data as Dashboard, no extra fetch if cached
+  const { data: resume, isLoading: resumeLoading } = useQuery({
     queryKey: ["resume"],
     queryFn: async () => {
       const res = await getMyResume();
       return res.data;
     },
     retry: false,
+    // Don't throw on 404 — just return null
+    throwOnError: false,
   });
 
   const uploadResumeMutation = useMutation({
@@ -33,11 +36,17 @@ export default function AddJob() {
       const res = await uploadResume(file);
       return res.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["resume"]);
+    onSuccess: (data) => {
+      // Update the cache directly with the new resume — no refetch needed
+      queryClient.setQueryData(["resume"], data);
+      // Also invalidate to confirm from server
+      queryClient.invalidateQueries({ queryKey: ["resume"] });
       setResumeSuccess(true);
       setResumeFile(null);
       setTimeout(() => setResumeSuccess(false), 3000);
+    },
+    onError: () => {
+      setResumeSuccess(false);
     },
   });
 
@@ -47,7 +56,7 @@ export default function AddJob() {
       return res.data;
     },
     onSuccess: (job) => {
-      queryClient.invalidateQueries(["jobs"]);
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
       navigate(`/jobs/${job.id}`);
     },
     onError: (err) => {
@@ -71,7 +80,7 @@ export default function AddJob() {
     createJobMutation.mutate(
       tab === "url"
         ? { source_url: url.trim() }
-        : { raw_description: description.trim() },
+        : { raw_description: description.trim() }
     );
   };
 
@@ -105,7 +114,9 @@ export default function AddJob() {
           <div>
             <h2 className="text-sm font-semibold text-gray-900">Your Resume</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              {resume
+              {resumeLoading
+                ? "Checking resume..."
+                : resume
                 ? `Active: ${resume.file_name}`
                 : "Upload your resume to get match scores"}
             </p>
@@ -137,8 +148,8 @@ export default function AddJob() {
               {resumeFile
                 ? resumeFile.name
                 : resume
-                  ? "Upload new resume (PDF)"
-                  : "Choose PDF file"}
+                ? "Upload new resume (PDF)"
+                : "Choose PDF file"}
             </span>
             <input
               type="file"
@@ -181,7 +192,7 @@ export default function AddJob() {
 
         {resumeSuccess && (
           <div className="mt-3 text-xs text-emerald-600 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg">
-            ✓ Resume uploaded successfully
+            ✓ Resume uploaded successfully — match scores will now be calculated
           </div>
         )}
         {uploadResumeMutation.isError && (
@@ -255,6 +266,12 @@ export default function AddJob() {
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl">
               {error}
+            </div>
+          )}
+
+          {!resume && !resumeLoading && (
+            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-xl">
+              ⚠ No resume uploaded — job will be saved but match score won't be calculated
             </div>
           )}
 

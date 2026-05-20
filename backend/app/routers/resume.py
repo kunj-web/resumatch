@@ -1,5 +1,4 @@
 import uuid
-import os
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,12 +6,12 @@ from sqlalchemy import select, update
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.config import settings
 from app.models.user import User
 from app.models.resume import Resume
 from app.models.enums import ResumeProcessingStatus
 from app.schemas.resume import ResumeResponse, ResumeUploadResponse
 from app.services.parser import parse_resume
+from app.services.supabase_storage import upload_file, delete_file
 
 router = APIRouter(prefix="/resume", tags=["resume"])
 
@@ -50,22 +49,26 @@ async def upload_resume(
             detail="PDF appears to be empty or scanned — paste your resume as text instead",
         )
 
-    # Save PDF file locally
+    # Upload to Supabase Storage
     file_name = f"{uuid.uuid4()}.pdf"
-    file_path = os.path.join(settings.UPLOAD_DIR, file_name)
-    with open(file_path, "wb") as f:
-        f.write(file_bytes)
+    try:
+        storage_path = await upload_file(file_bytes, file_name)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"File storage failed: {str(e)}",
+        )
 
     # Deactivate all previous resumes for this user
     await db.execute(
         update(Resume).where(Resume.user_id == current_user.id).values(is_active=False)
     )
 
-    # Save new resume to DB
+    # Save new resume to DB — file_path now stores the Supabase storage path
     resume = Resume(
         user_id=current_user.id,
         file_name=file.filename,
-        file_path=file_path,
+        file_path=storage_path,
         raw_text=raw_text,
         is_active=True,
         processing_status=ResumeProcessingStatus.PARSED,
@@ -82,7 +85,8 @@ async def upload_resume(
 
 @router.get("/me", response_model=ResumeResponse)
 async def get_my_resume(
-    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(Resume)
@@ -102,7 +106,8 @@ async def get_my_resume(
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_resume(
-    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(Resume)
@@ -113,8 +118,15 @@ async def delete_resume(
 
     if not resume:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="No active resume found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active resume found",
         )
+
+    # Delete from Supabase Storage
+    try:
+        await delete_file(resume.file_path)
+    except Exception:
+        pass  # Don't block DB delete if storage delete fails
 
     await db.delete(resume)
     await db.commit()
