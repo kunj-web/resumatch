@@ -9,15 +9,19 @@ import time
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 async def wait_for_db(url):
-    engine = create_async_engine(url, future=True)
-    for _ in range(30):
+    # Add SSL for Supabase external connections
+    connect_args = {"ssl": "require"} if "supabase.com" in url else {}
+    engine = create_async_engine(url, future=True, connect_args=connect_args)
+    for i in range(60):
         try:
             async with engine.connect() as conn:
                 await conn.execute(text('SELECT 1'))
             await engine.dispose()
+            print('Database is ready!')
             return
-        except Exception:
-            time.sleep(1)
+        except Exception as e:
+            print(f'Attempt {i+1}/60 failed: {e}')
+            time.sleep(2)
     raise SystemExit('Database did not become available in time')
 asyncio.run(wait_for_db(os.environ['DATABASE_URL']))
 PY
