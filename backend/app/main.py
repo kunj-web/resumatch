@@ -14,8 +14,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        # Add your Netlify URL here after deploy e.g.:
-        # "https://resumatch.netlify.app",
+        "https://resumatchnow.netlify.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
