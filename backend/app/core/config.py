@@ -14,8 +14,10 @@ class Settings(BaseSettings):
     # Groq
     GROQ_API_KEY: str
 
-    # File uploads
-    UPLOAD_DIR: str = "uploads/resumes"
+    # Supabase Storage
+    SUPABASE_URL: str
+    SUPABASE_SERVICE_ROLE_KEY: str
+    SUPABASE_BUCKET: str = "resumes"
 
     class Config:
         env_file = ".env"
