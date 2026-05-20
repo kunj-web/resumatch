@@ -8,7 +8,6 @@ import os
 import time
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
-
 async def wait_for_db(url):
     # Add SSL for Supabase external connections
     connect_args = {"ssl": "require"} if "supabase.com" in url else {}
@@ -24,7 +23,6 @@ async def wait_for_db(url):
             print(f'Attempt {i+1}/60 failed: {e}')
             time.sleep(2)
     raise SystemExit('Database did not become available in time')
-
 asyncio.run(wait_for_db(os.environ['DATABASE_URL']))
 PY
 printf 'Running database migrations...\n'
