@@ -210,7 +210,7 @@ async def update_job_status(
     if payload.status == JobStatus.APPLIED and not job.applied_at:
         from datetime import datetime, timezone
 
-        job.applied_at = datetime.now(timezone.utc)
+        job.applied_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
     await db.commit()
     await db.refresh(job)
