@@ -17,11 +17,8 @@ from app.schemas.token import Token
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post(
-    "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register(payload: UserRegister, db: AsyncSession = Depends(get_db)):
-    # Check if email already exists
     result = await db.execute(select(User).where(User.email == payload.email))
     existing_user = result.scalar_one_or_none()
 
@@ -40,12 +37,14 @@ async def register(payload: UserRegister, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
 
-    return user
+    access_token = create_access_token(str(user.id))
+    refresh_token = create_refresh_token(str(user.id))
+
+    return Token(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/login", response_model=Token)
 async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)):
-    # Fetch user by email
     result = await db.execute(select(User).where(User.email == payload.email))
     user = result.scalar_one_or_none()
 

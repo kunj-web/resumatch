@@ -28,8 +28,9 @@ export default function Register() {
       const res = await register(credentials);
       return res.data;
     },
-    onSuccess: () => {
-      navigate("/login");
+    onSuccess: (data) => {                    
+    localStorage.setItem("access_token", data.access_token);  
+    navigate("/");
     },
     onError: (err) => {
       setError(err.response?.data?.detail || "Something went wrong");
