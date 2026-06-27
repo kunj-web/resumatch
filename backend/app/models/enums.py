@@ -27,6 +27,11 @@ class ResumeProcessingStatus(str, enum.Enum):
     FAILED = "failed"
 
 
+class UserPlan(str, enum.Enum):
+    FREE = "free"
+    PRO = "pro"
+
+
 class JobStatus(str, enum.Enum):
     SAVED = "saved"
     APPLIED = "applied"

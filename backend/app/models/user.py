@@ -1,11 +1,12 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, func
+from sqlalchemy import String, Integer, Enum, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+from app.models.enums import UserPlan
 
 
 class User(Base):
@@ -20,6 +21,14 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
 
     full_name: Mapped[str] = mapped_column(String, nullable=False)
+
+    plan: Mapped[UserPlan] = mapped_column(
+        Enum(UserPlan), nullable=False, default=UserPlan.FREE
+    )
+
+    tailor_resume_credits_used: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 

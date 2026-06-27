@@ -1,6 +1,12 @@
 import uuid
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
+
+from app.models.enums import UserPlan
+
+
+FREE_TAILOR_RESUME_CREDIT_LIMIT = 10
 
 
 class UserRegister(BaseModel):
@@ -61,6 +67,25 @@ class UserResponse(BaseModel):
     id: uuid.UUID
     email: str
     full_name: str
+    plan: UserPlan
+    tailor_resume_credits_used: int
     created_at: datetime
+
+    @computed_field
+    @property
+    def tailor_resume_credit_limit(self) -> Optional[int]:
+        if self.plan == UserPlan.PRO:
+            return None
+        return FREE_TAILOR_RESUME_CREDIT_LIMIT
+
+    @computed_field
+    @property
+    def tailor_resume_credits_remaining(self) -> Optional[int]:
+        if self.plan == UserPlan.PRO:
+            return None
+        return max(
+            FREE_TAILOR_RESUME_CREDIT_LIMIT - self.tailor_resume_credits_used,
+            0,
+        )
 
     model_config = {"from_attributes": True}
