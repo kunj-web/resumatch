@@ -4,6 +4,7 @@ from app.models.enums import (
     JobType,
     ExtractionStatus,
     ResumeProcessingStatus,
+    UserPlan,
     JobStatus,
 )
 from app.models.user import User
@@ -16,6 +17,7 @@ __all__ = [
     "JobType",
     "ExtractionStatus",
     "ResumeProcessingStatus",
+    "UserPlan",
     "JobStatus",
     "User",
     "Resume",
