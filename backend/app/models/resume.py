@@ -25,6 +25,9 @@ class Resume(Base):
 
     file_name: Mapped[str] = mapped_column(String, nullable=False)
 
+    # pdf or docx. DOCX is preferred for format-preserving tailoring.
+    file_type: Mapped[str] = mapped_column(String(10), nullable=False, default="pdf")
+
     # Local filesystem path e.g. /uploads/resumes/<uuid>.pdf
     file_path: Mapped[str] = mapped_column(String, nullable=False)
 
