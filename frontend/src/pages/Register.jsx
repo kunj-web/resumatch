@@ -240,7 +240,7 @@ export default function Register() {
               {
                 step: "01",
                 title: "Upload your resume",
-                desc: "PDF supported, parsed instantly",
+                desc: "PDF and DOCX supported, parsed instantly",
               },
               {
                 step: "02",

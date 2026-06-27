@@ -118,7 +118,7 @@ export default function AddJob() {
                 ? "Checking resume..."
                 : resume
                 ? `Active: ${resume.file_name}`
-                : "Upload your resume to get match scores"}
+                : "Upload PDF for matching or DOCX for future tailoring"}
             </p>
           </div>
           {resume && (
@@ -148,12 +148,12 @@ export default function AddJob() {
               {resumeFile
                 ? resumeFile.name
                 : resume
-                ? "Upload new resume (PDF)"
-                : "Choose PDF file"}
+                ? "Upload new resume (PDF or DOCX)"
+                : "Choose PDF or DOCX file"}
             </span>
             <input
               type="file"
-              accept=".pdf"
+              accept=".pdf,.docx"
               className="hidden"
               onChange={(e) => setResumeFile(e.target.files[0])}
             />

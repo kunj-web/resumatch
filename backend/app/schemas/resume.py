@@ -8,6 +8,7 @@ class ResumeResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
     file_name: str
+    file_type: str
     raw_text: str
     is_active: bool
     processing_status: ResumeProcessingStatus

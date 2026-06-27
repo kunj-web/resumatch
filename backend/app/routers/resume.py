@@ -15,6 +15,11 @@ from app.services.supabase_storage import upload_file, delete_file
 
 router = APIRouter(prefix="/resume", tags=["resume"])
 
+SUPPORTED_RESUME_TYPES = {
+    "pdf": "application/pdf",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+
 
 @router.post(
     "/upload", response_model=ResumeUploadResponse, status_code=status.HTTP_201_CREATED
@@ -24,35 +29,40 @@ async def upload_resume(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    original_file_name = file.filename or ""
+    file_type = original_file_name.rsplit(".", 1)[-1].lower()
+
     # Validate file type
-    if not file.filename.endswith(".pdf"):
+    if file_type not in SUPPORTED_RESUME_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only PDF files are accepted",
+            detail="Only PDF and DOCX files are accepted",
         )
 
     # Read file bytes
     file_bytes = await file.read()
 
-    # Parse text from PDF
+    # Parse text from resume
     try:
-        raw_text = parse_resume(file_bytes)
+        raw_text = parse_resume(file_bytes, file_type)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Could not extract text from PDF",
+            detail=f"Could not extract text from {file_type.upper()}",
         )
 
     if not raw_text:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="PDF appears to be empty or scanned — paste your resume as text instead",
+            detail="Resume appears to be empty or unreadable",
         )
 
     # Upload to Supabase Storage
-    file_name = f"{uuid.uuid4()}.pdf"
+    file_name = f"{uuid.uuid4()}.{file_type}"
     try:
-        storage_path = await upload_file(file_bytes, file_name)
+        storage_path = await upload_file(
+            file_bytes, file_name, SUPPORTED_RESUME_TYPES[file_type]
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -67,7 +77,8 @@ async def upload_resume(
     # Save new resume to DB — file_path now stores the Supabase storage path
     resume = Resume(
         user_id=current_user.id,
-        file_name=file.filename,
+        file_name=original_file_name,
+        file_type=file_type,
         file_path=storage_path,
         raw_text=raw_text,
         is_active=True,

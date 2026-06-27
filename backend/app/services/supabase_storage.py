@@ -9,13 +9,15 @@ HEADERS = {
 }
 
 
-async def upload_file(file_bytes: bytes, file_name: str) -> str:
-    """Upload PDF to Supabase Storage. Returns the storage path."""
+async def upload_file(
+    file_bytes: bytes, file_name: str, content_type: str = "application/pdf"
+) -> str:
+    """Upload resume file to Supabase Storage. Returns the storage path."""
     url = f"{STORAGE_BASE}/object/{BUCKET}/{file_name}"
     async with httpx.AsyncClient() as client:
         response = await client.post(
             url,
-            headers={**HEADERS, "Content-Type": "application/pdf"},
+            headers={**HEADERS, "Content-Type": content_type},
             content=file_bytes,
         )
     if response.status_code not in (200, 201):
