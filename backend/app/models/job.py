@@ -116,3 +116,7 @@ class Job(Base):
     # -------------------------
 
     user: Mapped["User"] = relationship("User", back_populates="jobs")
+
+    tailored_resumes: Mapped[list["TailoredResume"]] = relationship(
+        "TailoredResume", back_populates="job", cascade="all, delete-orphan"
+    )
