@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AddJob from "./pages/AddJob";
 import JobDetail from "./pages/JobDetail";
+import TailoredResumeReview from "./pages/TailoredResumeReview";
 import Layout from "./components/Layout";
 
 // Single QueryClient instance — shared cache across all pages
@@ -50,6 +51,14 @@ export default function App() {
             element={
               <PrivateRoute>
                 <JobDetail />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tailored-resumes/:id"
+            element={
+              <PrivateRoute>
+                <TailoredResumeReview />
               </PrivateRoute>
             }
           />
