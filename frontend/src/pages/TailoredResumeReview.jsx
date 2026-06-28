@@ -57,6 +57,97 @@ function fromTextList(text) {
     .filter(Boolean);
 }
 
+function getBulletText(item) {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  return item.revised || item.original || "";
+}
+
+function ResumeContentPreview({ content, job }) {
+  const sections = content?.tailored_sections || {};
+  const skills = sections.skills || [];
+  const experienceBullets = (sections.experience_bullets || [])
+    .map(getBulletText)
+    .filter(Boolean);
+  const projectBullets = (sections.project_bullets || [])
+    .map(getBulletText)
+    .filter(Boolean);
+  const atsFixes = content?.ats_fixes || [];
+
+  return (
+    <div className="bg-gray-100 p-4 sm:p-8">
+      <div className="mx-auto max-w-4xl bg-white border border-gray-200 shadow-sm px-6 py-8 sm:px-10 sm:py-10 text-gray-900">
+        <header className="border-b border-gray-200 pb-5 mb-6">
+          <h3 className="text-2xl font-bold tracking-normal text-gray-950">
+            Tailored Resume
+          </h3>
+          <p className="text-sm text-gray-500 mt-1">
+            {job.title || "Target Role"}
+            {job.company ? ` at ${job.company}` : ""}
+          </p>
+        </header>
+
+        {sections.summary && (
+          <section className="mb-6">
+            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+              Professional Summary
+            </h4>
+            <p className="text-sm leading-6 text-gray-800">{sections.summary}</p>
+          </section>
+        )}
+
+        {skills.length > 0 && (
+          <section className="mb-6">
+            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+              Skills
+            </h4>
+            <p className="text-sm leading-6 text-gray-800">{skills.join(", ")}</p>
+          </section>
+        )}
+
+        {experienceBullets.length > 0 && (
+          <section className="mb-6">
+            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+              Experience
+            </h4>
+            <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-gray-800">
+              {experienceBullets.map((bullet, index) => (
+                <li key={index}>{bullet}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {projectBullets.length > 0 && (
+          <section className="mb-6">
+            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+              Projects
+            </h4>
+            <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-gray-800">
+              {projectBullets.map((bullet, index) => (
+                <li key={index}>{bullet}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {atsFixes.length > 0 && (
+          <section>
+            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+              ATS Notes
+            </h4>
+            <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-gray-800">
+              {atsFixes.map((fix, index) => (
+                <li key={index}>{fix}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function EditableBulletList({ title, items, onChange }) {
   if (!items.length) return null;
 
@@ -404,17 +495,7 @@ export default function TailoredResumeReview() {
               className="w-full h-[720px] bg-gray-50"
             />
           ) : (
-            <div className="p-6 bg-gray-50">
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <p className="text-sm font-semibold text-gray-900">
-                  {tailoredResume.final_file_name || "Final resume generated"}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Preview is available for PDF output. Download this file to review
-                  the generated resume.
-                </p>
-              </div>
-            </div>
+            <ResumeContentPreview content={activeContent} job={job} />
           )}
         </section>
       )}
