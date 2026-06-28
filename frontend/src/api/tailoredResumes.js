@@ -5,5 +5,12 @@ export const createTailoredResume = (jobId) =>
 
 export const getTailoredResume = (id) => api.get(`/tailored-resumes/${id}`);
 
-export const updateTailoredResume = (id, editedContent) =>
-  api.patch(`/tailored-resumes/${id}`, { edited_content: editedContent });
+export const updateTailoredResume = (
+  id,
+  { editedContent, templateKey, outputFormat }
+) =>
+  api.patch(`/tailored-resumes/${id}`, {
+    edited_content: editedContent,
+    template_key: templateKey,
+    output_format: outputFormat,
+  });

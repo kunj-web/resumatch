@@ -1,13 +1,10 @@
-import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = () => {
-    setLoggingOut(true);
     localStorage.removeItem("access_token");
     navigate("/login");
   };

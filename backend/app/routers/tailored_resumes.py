@@ -13,6 +13,10 @@ from app.models.tailored_resume import TailoredResume
 from app.models.user import User
 from app.schemas.tailored_resume import TailoredResumeResponse, TailoredResumeUpdate
 from app.services.plans import can_tailor_resume, consume_tailor_resume_credit
+from app.services.resume_templates import (
+    is_allowed_output_format,
+    is_allowed_template_key,
+)
 from app.services.tailor import tailor_resume_to_job
 
 
@@ -189,7 +193,25 @@ async def update_tailored_resume(
             detail="Tailored resume not found",
         )
 
-    tailored_resume.edited_content = payload.edited_content
+    if "edited_content" in payload.model_fields_set:
+        tailored_resume.edited_content = payload.edited_content
+
+    if payload.template_key is not None:
+        if not is_allowed_template_key(payload.template_key):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Unsupported resume template",
+            )
+        tailored_resume.template_key = payload.template_key
+
+    if payload.output_format is not None:
+        if not is_allowed_output_format(payload.output_format):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Unsupported output format",
+            )
+        tailored_resume.output_format = payload.output_format
+
     await db.commit()
     await db.refresh(tailored_resume)
 
