@@ -16,6 +16,7 @@ class TailoredResumeResponse(BaseModel):
     draft_content: dict
     edited_content: Optional[dict]
     unsupported_gaps: list
+    rendered_content: Optional[dict]
     template_key: str
     output_format: str
     final_file_name: Optional[str]

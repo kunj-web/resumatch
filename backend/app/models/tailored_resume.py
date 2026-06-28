@@ -53,6 +53,8 @@ class TailoredResume(Base):
     # Missing skills/keyword gaps that were not safe to insert.
     unsupported_gaps: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
 
+    rendered_content: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
     template_key: Mapped[str] = mapped_column(
         String(50), nullable=False, default="ats_classic"
     )

@@ -60,87 +60,159 @@ function fromTextList(text) {
 function getBulletText(item) {
   if (!item) return "";
   if (typeof item === "string") return item;
-  return item.revised || item.original || "";
+  return item.text || item.revised || item.original || "";
 }
 
-function ResumeContentPreview({ content, job }) {
+function getBulletLinks(item) {
+  if (!item || typeof item === "string") return [];
+  return item.links || [];
+}
+
+function fallbackRenderedContent(content, job) {
   const sections = content?.tailored_sections || {};
-  const skills = sections.skills || [];
-  const experienceBullets = (sections.experience_bullets || [])
-    .map(getBulletText)
-    .filter(Boolean);
-  const projectBullets = (sections.project_bullets || [])
-    .map(getBulletText)
-    .filter(Boolean);
-  const atsFixes = content?.ats_fixes || [];
+  return {
+    header: {
+      name: "Candidate Name",
+      target_role: job.title || "",
+      target_company: job.company || "",
+      links: [],
+    },
+    summary: sections.summary || "",
+    skills: [
+      {
+        label: "Skills",
+        items: sections.skills || [],
+      },
+    ].filter((group) => group.items.length),
+    projects: (sections.project_bullets || []).map(getBulletText).filter(Boolean),
+    experience: (sections.experience_bullets || []).map(getBulletText).filter(Boolean),
+    education: [],
+    section_order: ["summary", "skills", "projects", "experience", "education"],
+  };
+}
+
+function ResumeContentPreview({ renderedContent }) {
+  const header = renderedContent?.header || {};
+  const sectionOrder = renderedContent?.section_order || [
+    "summary",
+    "skills",
+    "projects",
+    "experience",
+    "education",
+  ];
 
   return (
     <div className="bg-gray-100 p-4 sm:p-8">
       <div className="mx-auto max-w-4xl bg-white border border-gray-200 shadow-sm px-6 py-8 sm:px-10 sm:py-10 text-gray-900">
         <header className="border-b border-gray-200 pb-5 mb-6">
           <h3 className="text-2xl font-bold tracking-normal text-gray-950">
-            Tailored Resume
+            {header.name || "Candidate Name"}
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            {job.title || "Target Role"}
-            {job.company ? ` at ${job.company}` : ""}
+            {[header.target_role, header.target_company].filter(Boolean).join(" at ")}
           </p>
+          {header.links?.length > 0 && (
+            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-gray-600">
+              {header.links.map((link, index) => (
+                <span key={index}>{link.label}</span>
+              ))}
+            </div>
+          )}
         </header>
 
-        {sections.summary && (
-          <section className="mb-6">
-            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
-              Professional Summary
-            </h4>
-            <p className="text-sm leading-6 text-gray-800">{sections.summary}</p>
-          </section>
-        )}
+        {sectionOrder.map((sectionKey) => {
+          if (sectionKey === "summary" && renderedContent?.summary) {
+            return (
+              <section key={sectionKey} className="mb-6">
+                <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+                  Summary
+                </h4>
+                <p className="text-sm leading-6 text-gray-800">
+                  {renderedContent.summary}
+                </p>
+              </section>
+            );
+          }
 
-        {skills.length > 0 && (
-          <section className="mb-6">
-            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
-              Skills
-            </h4>
-            <p className="text-sm leading-6 text-gray-800">{skills.join(", ")}</p>
-          </section>
-        )}
+          if (sectionKey === "skills" && renderedContent?.skills?.length > 0) {
+            return (
+              <section key={sectionKey} className="mb-6">
+                <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+                  Technical Skills
+                </h4>
+                <div className="space-y-1 text-sm leading-6 text-gray-800">
+                  {renderedContent.skills.map((group, index) => (
+                    <div key={index} className="grid grid-cols-[110px_1fr] gap-3">
+                      <span className="font-semibold text-gray-900">
+                        {group.label}:
+                      </span>
+                      <span>{group.items.join(", ")}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          }
 
-        {experienceBullets.length > 0 && (
-          <section className="mb-6">
+          if (
+            ["projects", "experience"].includes(sectionKey) &&
+            renderedContent?.[sectionKey]?.length > 0
+          ) {
+            return (
+              <section key={sectionKey} className="mb-6">
+                <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+                  {sectionKey === "projects" ? "Projects" : "Experience"}
+                </h4>
+                <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-gray-800">
+                  {renderedContent[sectionKey].map((bullet, index) => {
+                    const links = getBulletLinks(bullet);
+
+                    return (
+                      <li key={index}>
+                        <span>{getBulletText(bullet)}</span>
+                        {links.length > 0 && (
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-xs text-gray-500">
+                            {links.map((link, linkIndex) => (
+                              <span key={linkIndex}>{link.label}</span>
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            );
+          }
+
+          if (sectionKey === "education" && renderedContent?.education?.length > 0) {
+            return (
+              <section key={sectionKey}>
+                <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
+                  Education
+                </h4>
+                <div className="space-y-1 text-sm leading-6 text-gray-800">
+                  {renderedContent.education.map((line, index) => (
+                    <p key={index}>{line}</p>
+                  ))}
+                </div>
+              </section>
+            );
+          }
+
+          return null;
+        })}
+
+        {renderedContent?.additional_links?.length > 0 && (
+          <section className="mt-6">
             <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
-              Experience
+              Links
             </h4>
-            <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-gray-800">
-              {experienceBullets.map((bullet, index) => (
-                <li key={index}>{bullet}</li>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-600">
+              {renderedContent.additional_links.map((link, index) => (
+                <span key={index}>{link.label}</span>
               ))}
-            </ul>
-          </section>
-        )}
-
-        {projectBullets.length > 0 && (
-          <section className="mb-6">
-            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
-              Projects
-            </h4>
-            <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-gray-800">
-              {projectBullets.map((bullet, index) => (
-                <li key={index}>{bullet}</li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {atsFixes.length > 0 && (
-          <section>
-            <h4 className="text-xs font-bold uppercase text-gray-500 mb-2">
-              ATS Notes
-            </h4>
-            <ul className="list-disc pl-5 space-y-2 text-sm leading-6 text-gray-800">
-              {atsFixes.map((fix, index) => (
-                <li key={index}>{fix}</li>
-              ))}
-            </ul>
+            </div>
           </section>
         )}
       </div>
@@ -294,8 +366,9 @@ export default function TailoredResumeReview() {
 
       return { finalizedResume: res.data, preview };
     },
-    onSuccess: ({ preview }) => {
+    onSuccess: ({ finalizedResume, preview }) => {
       setFinalPreview(preview);
+      queryClient.setQueryData(["tailored-resume", id], finalizedResume);
       setGenerated(true);
       queryClient.invalidateQueries(["tailored-resume", id]);
       setTimeout(() => setGenerated(false), 2500);
@@ -367,6 +440,8 @@ export default function TailoredResumeReview() {
   const draft = tailoredResume.draft_content || {};
   const job = draft.job || {};
   const unsupportedGaps = tailoredResume.unsupported_gaps || [];
+  const renderedPreviewContent =
+    tailoredResume.rendered_content || fallbackRenderedContent(activeContent, job);
 
   return (
     <div className="w-full max-w-7xl mx-auto">
@@ -495,7 +570,7 @@ export default function TailoredResumeReview() {
               className="w-full h-[720px] bg-gray-50"
             />
           ) : (
-            <ResumeContentPreview content={activeContent} job={job} />
+            <ResumeContentPreview renderedContent={renderedPreviewContent} />
           )}
         </section>
       )}

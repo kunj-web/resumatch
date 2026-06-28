@@ -22,6 +22,7 @@ from app.schemas.tailored_resume import (
 )
 from app.services.document_generator import generate_resume_document, get_content_type
 from app.services.plans import can_tailor_resume, consume_tailor_resume_credit
+from app.services.resume_renderer import render_resume_content
 from app.services.resume_templates import (
     is_allowed_output_format,
     is_allowed_template_key,
@@ -274,8 +275,31 @@ async def finalize_tailored_resume(
             detail="No tailored resume content found",
         )
 
+    resume_result = await db.execute(
+        select(Resume)
+        .where(Resume.id == tailored_resume.source_resume_id)
+        .where(Resume.user_id == current_user.id)
+    )
+    source_resume = resume_result.scalar_one_or_none()
+
+    if not source_resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Source resume not found",
+        )
+
+    rendered_content = render_resume_content(
+        content=content,
+        template_key=template_key,
+        source_resume_text=source_resume.raw_text,
+    )
+
     try:
-        file_bytes = generate_resume_document(content, template_key, output_format)
+        file_bytes = generate_resume_document(
+            rendered_content,
+            template_key,
+            output_format,
+        )
     except Exception:
         logger.exception("Failed to generate final resume document")
         tailored_resume.status = TailoredResumeStatus.FAILED
@@ -324,6 +348,7 @@ async def finalize_tailored_resume(
 
     tailored_resume.template_key = template_key
     tailored_resume.output_format = output_format
+    tailored_resume.rendered_content = rendered_content
     tailored_resume.final_file_name = final_file_name
     tailored_resume.final_file_path = final_file_path
     tailored_resume.file_name = final_file_name
