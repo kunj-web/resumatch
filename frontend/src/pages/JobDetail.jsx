@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getJob, updateJobStatus, deleteJob } from "../api/jobs";
+import { createTailoredResume } from "../api/tailoredResumes";
 
 const STATUS_OPTIONS = [
   {
@@ -120,6 +121,8 @@ export default function JobDetail() {
   // All state declarations first
   const [visible, setVisible] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [tailoredResume, setTailoredResume] = useState(null);
+  const [tailorError, setTailorError] = useState("");
 
   // Visibility animation
   useEffect(() => {
@@ -152,6 +155,23 @@ export default function JobDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries(["jobs"]);
       navigate("/");
+    },
+  });
+
+  const tailorMutation = useMutation({
+    mutationFn: async () => {
+      const res = await createTailoredResume(id);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setTailoredResume(data);
+      setTailorError("");
+      queryClient.invalidateQueries(["me"]);
+    },
+    onError: (err) => {
+      setTailorError(
+        err.response?.data?.detail || "Could not tailor this resume yet."
+      );
     },
   });
 
@@ -194,6 +214,8 @@ export default function JobDetail() {
     );
 
   const currentStatus = STATUS_OPTIONS.find((s) => s.value === job.status);
+  const canTailor =
+    job.missing_skills?.length > 0 || job.keyword_gaps?.length > 0;
 
   return (
     <div
@@ -295,9 +317,60 @@ export default function JobDetail() {
             </div>
           </div>
 
-          {/* Score */}
-          <ScoreRing score={job.match_score} />
+          {/* Score + Tailor */}
+          <div className="flex flex-col items-center gap-3">
+            <ScoreRing score={job.match_score} />
+            <button
+              onClick={() => tailorMutation.mutate()}
+              disabled={!canTailor || tailorMutation.isPending}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-white disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all duration-200 shadow-md shadow-emerald-500/20"
+              style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+            >
+              {tailorMutation.isPending ? (
+                <>
+                  <svg
+                    className="animate-spin h-3.5 w-3.5 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                  Tailoring...
+                </>
+              ) : (
+                "Tailor Resume"
+              )}
+            </button>
+          </div>
         </div>
+
+        {(tailoredResume || tailorError) && (
+          <div
+            className={`mt-4 px-3 py-2 rounded-lg border text-xs ${
+              tailoredResume
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-red-50 border-red-200 text-red-600"
+            }`}
+          >
+            {tailoredResume
+              ? `Tailored draft ready. ${
+                  tailoredResume.unsupported_gaps?.length || 0
+                } unsupported gaps kept out.`
+              : tailorError}
+          </div>
+        )}
 
         {/* Source URL */}
         {job.source_url && (
