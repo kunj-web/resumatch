@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, resume, jobs
+from app.routers import auth, resume, jobs, tailored_resumes
 
 
 app = FastAPI(
@@ -24,6 +24,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(resume.router)
 app.include_router(jobs.router)
+app.include_router(tailored_resumes.router)
 
 
 @app.get("/health")
