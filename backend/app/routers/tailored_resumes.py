@@ -6,12 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
+from app.core.ratelimit import check_rate_limit
 from app.models.job import Job
 from app.models.resume import Resume
 from app.models.tailored_resume import TailoredResume
 from app.models.user import User
 from app.schemas.tailored_resume import TailoredResumeResponse
-from app.services.plans import can_tailor_resume
+from app.services.plans import can_tailor_resume, consume_tailor_resume_credit
+from app.services.tailor import tailor_resume_to_job
 
 
 router = APIRouter(prefix="/jobs", tags=["tailored-resumes"])
@@ -66,12 +68,6 @@ async def create_tailored_resume(
             detail="Upload a PDF or DOCX resume to tailor it",
         )
 
-    if not can_tailor_resume(current_user):
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="You have used all 10 free tailored resumes. Upgrade to Pro for unlimited tailoring.",
-        )
-
     existing_result = await db.execute(
         select(TailoredResume)
         .where(TailoredResume.user_id == current_user.id)
@@ -85,13 +81,40 @@ async def create_tailored_resume(
     if existing_tailored_resume:
         return existing_tailored_resume
 
+    if not can_tailor_resume(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="You have used all 10 free tailored resumes. Upgrade to Pro for unlimited tailoring.",
+        )
+
+    is_allowed, info = check_rate_limit(current_user.id, "improve_resume")
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many requests. You can make {info['limit']} resume tailoring requests per hour. Try again in {info['retry_after']} seconds.",
+        )
+
+    try:
+        draft_content = await tailor_resume_to_job(
+            resume_text=resume.raw_text,
+            job_description=job.raw_description,
+            required_skills=job.required_skills,
+            preferred_skills=job.preferred_skills,
+            missing_skills=job.missing_skills,
+            keyword_gaps=job.keyword_gaps,
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not generate tailored resume draft. Please try again.",
+        )
+
     tailored_resume = TailoredResume(
         user_id=current_user.id,
         job_id=job.id,
         source_resume_id=resume.id,
         draft_content={
-            "version": 1,
-            "status": "pending_generation",
+            **draft_content,
             "source_resume": {
                 "id": str(resume.id),
                 "file_name": resume.file_name,
@@ -107,10 +130,11 @@ async def create_tailored_resume(
                 "keyword_gaps": job.keyword_gaps,
             },
         },
-        unsupported_gaps=[],
+        unsupported_gaps=draft_content.get("unsupported_gaps") or [],
     )
 
     db.add(tailored_resume)
+    consume_tailor_resume_credit(current_user)
     await db.commit()
     await db.refresh(tailored_resume)
 
