@@ -167,6 +167,7 @@ export default function JobDetail() {
       setTailoredResume(data);
       setTailorError("");
       queryClient.invalidateQueries(["me"]);
+      navigate(`/tailored-resumes/${data.id}`);
     },
     onError: (err) => {
       setTailorError(

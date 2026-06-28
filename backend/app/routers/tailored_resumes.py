@@ -11,16 +11,16 @@ from app.models.job import Job
 from app.models.resume import Resume
 from app.models.tailored_resume import TailoredResume
 from app.models.user import User
-from app.schemas.tailored_resume import TailoredResumeResponse
+from app.schemas.tailored_resume import TailoredResumeResponse, TailoredResumeUpdate
 from app.services.plans import can_tailor_resume, consume_tailor_resume_credit
 from app.services.tailor import tailor_resume_to_job
 
 
-router = APIRouter(prefix="/jobs", tags=["tailored-resumes"])
+router = APIRouter(tags=["tailored-resumes"])
 
 
 @router.post(
-    "/{job_id}/tailored-resumes",
+    "/jobs/{job_id}/tailored-resumes",
     response_model=TailoredResumeResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -135,6 +135,61 @@ async def create_tailored_resume(
 
     db.add(tailored_resume)
     consume_tailor_resume_credit(current_user)
+    await db.commit()
+    await db.refresh(tailored_resume)
+
+    return tailored_resume
+
+
+@router.get(
+    "/tailored-resumes/{tailored_resume_id}",
+    response_model=TailoredResumeResponse,
+)
+async def get_tailored_resume(
+    tailored_resume_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(TailoredResume)
+        .where(TailoredResume.id == tailored_resume_id)
+        .where(TailoredResume.user_id == current_user.id)
+    )
+    tailored_resume = result.scalar_one_or_none()
+
+    if not tailored_resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tailored resume not found",
+        )
+
+    return tailored_resume
+
+
+@router.patch(
+    "/tailored-resumes/{tailored_resume_id}",
+    response_model=TailoredResumeResponse,
+)
+async def update_tailored_resume(
+    tailored_resume_id: uuid.UUID,
+    payload: TailoredResumeUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(TailoredResume)
+        .where(TailoredResume.id == tailored_resume_id)
+        .where(TailoredResume.user_id == current_user.id)
+    )
+    tailored_resume = result.scalar_one_or_none()
+
+    if not tailored_resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tailored resume not found",
+        )
+
+    tailored_resume.edited_content = payload.edited_content
     await db.commit()
     await db.refresh(tailored_resume)
 
