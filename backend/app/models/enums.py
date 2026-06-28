@@ -32,6 +32,12 @@ class UserPlan(str, enum.Enum):
     PRO = "pro"
 
 
+class TailoredResumeStatus(str, enum.Enum):
+    DRAFT = "draft"
+    FINALIZED = "finalized"
+    FAILED = "failed"
+
+
 class JobStatus(str, enum.Enum):
     SAVED = "saved"
     APPLIED = "applied"

@@ -5,11 +5,13 @@ from app.models.enums import (
     ExtractionStatus,
     ResumeProcessingStatus,
     UserPlan,
+    TailoredResumeStatus,
     JobStatus,
 )
 from app.models.user import User
 from app.models.resume import Resume
 from app.models.job import Job
+from app.models.tailored_resume import TailoredResume
 
 __all__ = [
     "Base",
@@ -18,8 +20,10 @@ __all__ = [
     "ExtractionStatus",
     "ResumeProcessingStatus",
     "UserPlan",
+    "TailoredResumeStatus",
     "JobStatus",
     "User",
     "Resume",
     "Job",
+    "TailoredResume",
 ]
