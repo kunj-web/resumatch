@@ -1,4 +1,6 @@
 import uuid
+from datetime import datetime
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -8,19 +10,28 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.ratelimit import check_rate_limit
 from app.models.job import Job
+from app.models.enums import TailoredResumeStatus
 from app.models.resume import Resume
 from app.models.tailored_resume import TailoredResume
 from app.models.user import User
-from app.schemas.tailored_resume import TailoredResumeResponse, TailoredResumeUpdate
+from app.schemas.tailored_resume import (
+    TailoredResumeDownloadResponse,
+    TailoredResumeFinalizeRequest,
+    TailoredResumeResponse,
+    TailoredResumeUpdate,
+)
+from app.services.document_generator import generate_resume_document, get_content_type
 from app.services.plans import can_tailor_resume, consume_tailor_resume_credit
 from app.services.resume_templates import (
     is_allowed_output_format,
     is_allowed_template_key,
 )
+from app.services.supabase_storage import StorageUploadError, get_signed_url, upload_file
 from app.services.tailor import tailor_resume_to_job
 
 
 router = APIRouter(tags=["tailored-resumes"])
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -216,3 +227,154 @@ async def update_tailored_resume(
     await db.refresh(tailored_resume)
 
     return tailored_resume
+
+
+@router.post(
+    "/tailored-resumes/{tailored_resume_id}/finalize",
+    response_model=TailoredResumeResponse,
+)
+async def finalize_tailored_resume(
+    tailored_resume_id: uuid.UUID,
+    payload: TailoredResumeFinalizeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(TailoredResume)
+        .where(TailoredResume.id == tailored_resume_id)
+        .where(TailoredResume.user_id == current_user.id)
+    )
+    tailored_resume = result.scalar_one_or_none()
+
+    if not tailored_resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tailored resume not found",
+        )
+
+    template_key = payload.template_key or tailored_resume.template_key
+    output_format = payload.output_format or tailored_resume.output_format
+
+    if not is_allowed_template_key(template_key):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unsupported resume template",
+        )
+
+    if not is_allowed_output_format(output_format):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Unsupported output format",
+        )
+
+    content = tailored_resume.edited_content or tailored_resume.draft_content
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="No tailored resume content found",
+        )
+
+    try:
+        file_bytes = generate_resume_document(content, template_key, output_format)
+    except Exception:
+        logger.exception("Failed to generate final resume document")
+        tailored_resume.status = TailoredResumeStatus.FAILED
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not generate final resume",
+        )
+
+    final_file_name = f"tailored-resume-{tailored_resume.id}.{output_format}"
+    storage_path = f"tailored-resumes/{current_user.id}/{final_file_name}"
+
+    try:
+        final_file_path = await upload_file(
+            file_bytes,
+            storage_path,
+            get_content_type(output_format),
+            upsert=True,
+        )
+    except StorageUploadError as exc:
+        logger.exception("Failed to upload final tailored resume")
+        tailored_resume.status = TailoredResumeStatus.FAILED
+        await db.commit()
+
+        if output_format == "docx" and "invalid_mime_type" in exc.response_text:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    "DOCX uploads are not allowed by the current Supabase bucket "
+                    "settings. Choose PDF or allow DOCX MIME type in Supabase Storage."
+                ),
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not upload final resume",
+        )
+    except Exception:
+        logger.exception("Failed to upload final tailored resume")
+        tailored_resume.status = TailoredResumeStatus.FAILED
+        await db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not upload final resume",
+        )
+
+    tailored_resume.template_key = template_key
+    tailored_resume.output_format = output_format
+    tailored_resume.final_file_name = final_file_name
+    tailored_resume.final_file_path = final_file_path
+    tailored_resume.file_name = final_file_name
+    tailored_resume.file_path = final_file_path
+    tailored_resume.status = TailoredResumeStatus.FINALIZED
+    tailored_resume.finalized_at = datetime.utcnow()
+
+    await db.commit()
+    await db.refresh(tailored_resume)
+
+    return tailored_resume
+
+
+@router.get(
+    "/tailored-resumes/{tailored_resume_id}/download",
+    response_model=TailoredResumeDownloadResponse,
+)
+async def download_tailored_resume(
+    tailored_resume_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(TailoredResume)
+        .where(TailoredResume.id == tailored_resume_id)
+        .where(TailoredResume.user_id == current_user.id)
+    )
+    tailored_resume = result.scalar_one_or_none()
+
+    if not tailored_resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tailored resume not found",
+        )
+
+    if not tailored_resume.final_file_path or not tailored_resume.final_file_name:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Final resume has not been generated yet",
+        )
+
+    try:
+        signed_url = await get_signed_url(tailored_resume.final_file_path)
+    except Exception:
+        logger.exception("Failed to create tailored resume download link")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not create download link",
+        )
+
+    return TailoredResumeDownloadResponse(
+        url=signed_url,
+        file_name=tailored_resume.final_file_name,
+    )

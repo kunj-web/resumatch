@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  downloadTailoredResume,
+  finalizeTailoredResume,
   getTailoredResume,
   updateTailoredResume,
 } from "../api/tailoredResumes";
@@ -13,7 +15,7 @@ const emptyForm = {
   projectBullets: [],
   atsFixesText: "",
   templateKey: "ats_classic",
-  outputFormat: "docx",
+  outputFormat: "pdf",
 };
 
 const resumeTemplates = [
@@ -104,6 +106,8 @@ export default function TailoredResumeReview() {
   const queryClient = useQueryClient();
   const [localForm, setLocalForm] = useState({ id: null, value: null });
   const [saved, setSaved] = useState(false);
+  const [generated, setGenerated] = useState(false);
+  const [finalPreview, setFinalPreview] = useState(null);
 
   const { data: tailoredResume, isLoading } = useQuery({
     queryKey: ["tailored-resume", id],
@@ -129,7 +133,7 @@ export default function TailoredResumeReview() {
       projectBullets: sections.project_bullets || [],
       atsFixesText: toTextList(activeContent.ats_fixes || []),
       templateKey: tailoredResume.template_key || "ats_classic",
-      outputFormat: tailoredResume.output_format || "docx",
+      outputFormat: tailoredResume.output_format || "pdf",
     };
   }, [activeContent, tailoredResume]);
 
@@ -145,11 +149,11 @@ export default function TailoredResumeReview() {
     });
   };
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
+  const buildEditedContent = () => {
       const original = activeContent || {};
       const originalSections = original.tailored_sections || {};
-      const editedContent = {
+
+      return {
         ...original,
         tailored_sections: {
           ...originalSections,
@@ -160,9 +164,12 @@ export default function TailoredResumeReview() {
         },
         ats_fixes: fromTextList(form.atsFixesText),
       };
+  };
 
+  const saveMutation = useMutation({
+    mutationFn: async () => {
       const res = await updateTailoredResume(id, {
-        editedContent,
+        editedContent: buildEditedContent(),
         templateKey: form.templateKey,
         outputFormat: form.outputFormat,
       });
@@ -174,6 +181,60 @@ export default function TailoredResumeReview() {
       setTimeout(() => setSaved(false), 2500);
     },
   });
+
+  const finalizeMutation = useMutation({
+    mutationFn: async () => {
+      await updateTailoredResume(id, {
+        editedContent: buildEditedContent(),
+        templateKey: form.templateKey,
+        outputFormat: form.outputFormat,
+      });
+
+      const res = await finalizeTailoredResume(id, {
+        templateKey: form.templateKey,
+        outputFormat: form.outputFormat,
+      });
+
+      let preview = null;
+      if (res.data.output_format === "pdf") {
+        const previewRes = await downloadTailoredResume(id);
+        preview = previewRes.data;
+      }
+
+      return { finalizedResume: res.data, preview };
+    },
+    onSuccess: ({ preview }) => {
+      setFinalPreview(preview);
+      setGenerated(true);
+      queryClient.invalidateQueries(["tailored-resume", id]);
+      setTimeout(() => setGenerated(false), 2500);
+    },
+  });
+
+  const downloadMutation = useMutation({
+    mutationFn: async () => {
+      const res = await downloadTailoredResume(id);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: async () => {
+      const res = await downloadTailoredResume(id);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setFinalPreview(data);
+    },
+  });
+
+  const resumeActionError =
+    finalizeMutation.error?.response?.data?.detail ||
+    downloadMutation.error?.response?.data?.detail ||
+    reviewMutation.error?.response?.data?.detail;
 
   if (isLoading) {
     return (
@@ -259,16 +320,104 @@ export default function TailoredResumeReview() {
               Save failed
             </span>
           )}
+          {generated && (
+            <span className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl">
+              Generated
+            </span>
+          )}
+          {resumeActionError && (
+            <span className="text-xs font-medium text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-xl">
+              {resumeActionError}
+            </span>
+          )}
           <button
             onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isPending || finalizeMutation.isPending}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-200 shadow-md shadow-emerald-500/20"
             style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
           >
             {saveMutation.isPending ? "Saving..." : "Save Edits"}
           </button>
+          <button
+            onClick={() => finalizeMutation.mutate()}
+            disabled={saveMutation.isPending || finalizeMutation.isPending}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-200 shadow-md shadow-gray-900/10"
+          >
+            {finalizeMutation.isPending ? "Generating..." : "Generate for Review"}
+          </button>
+          {tailoredResume.final_file_path && (
+            <button
+              onClick={() => reviewMutation.mutate()}
+              disabled={reviewMutation.isPending}
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 bg-white border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-200 hover:border-gray-300"
+            >
+              {reviewMutation.isPending ? "Loading..." : "Review Final"}
+            </button>
+          )}
+          {tailoredResume.final_file_path && (
+            <button
+              onClick={() => downloadMutation.mutate()}
+              disabled={downloadMutation.isPending}
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 bg-white border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-200 hover:border-gray-300"
+            >
+              {downloadMutation.isPending ? "Opening..." : "Download Resume"}
+            </button>
+          )}
         </div>
       </div>
+
+      {(finalPreview || tailoredResume.final_file_path) && (
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6 overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-b border-gray-100">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">
+                Final Resume Review
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                {tailoredResume.final_file_name || "Generated resume"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {!finalPreview && tailoredResume.output_format === "pdf" && (
+                <button
+                  onClick={() => reviewMutation.mutate()}
+                  disabled={reviewMutation.isPending}
+                  className="px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:border-gray-300"
+                >
+                  {reviewMutation.isPending ? "Loading..." : "Load Preview"}
+                </button>
+              )}
+              <button
+                onClick={() => downloadMutation.mutate()}
+                disabled={downloadMutation.isPending}
+                className="px-3 py-2 rounded-xl text-xs font-semibold text-white bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {downloadMutation.isPending ? "Opening..." : "Download"}
+              </button>
+            </div>
+          </div>
+
+          {finalPreview && tailoredResume.output_format === "pdf" ? (
+            <iframe
+              title="Final resume preview"
+              src={finalPreview.url}
+              className="w-full h-[720px] bg-gray-50"
+            />
+          ) : (
+            <div className="p-6 bg-gray-50">
+              <div className="rounded-xl border border-gray-200 bg-white p-5">
+                <p className="text-sm font-semibold text-gray-900">
+                  {tailoredResume.final_file_name || "Final resume generated"}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Preview is available for PDF output. Download this file to review
+                  the generated resume.
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
@@ -422,6 +571,10 @@ export default function TailoredResumeReview() {
                 {
                   label: "Format",
                   value: tailoredResume.output_format?.toUpperCase(),
+                },
+                {
+                  label: "Final File",
+                  value: tailoredResume.final_file_name,
                 },
                 {
                   label: "Source",

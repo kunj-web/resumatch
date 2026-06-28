@@ -56,7 +56,7 @@ class TailoredResume(Base):
     template_key: Mapped[str] = mapped_column(
         String(50), nullable=False, default="ats_classic"
     )
-    output_format: Mapped[str] = mapped_column(String(10), nullable=False, default="docx")
+    output_format: Mapped[str] = mapped_column(String(10), nullable=False, default="pdf")
     final_file_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     final_file_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
