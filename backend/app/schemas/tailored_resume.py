@@ -16,6 +16,10 @@ class TailoredResumeResponse(BaseModel):
     draft_content: dict
     edited_content: Optional[dict]
     unsupported_gaps: list
+    template_key: str
+    output_format: str
+    final_file_name: Optional[str]
+    final_file_path: Optional[str]
     file_name: Optional[str]
     file_path: Optional[str]
     created_at: datetime
@@ -26,4 +30,6 @@ class TailoredResumeResponse(BaseModel):
 
 
 class TailoredResumeUpdate(BaseModel):
-    edited_content: dict
+    edited_content: Optional[dict] = None
+    template_key: Optional[str] = None
+    output_format: Optional[str] = None

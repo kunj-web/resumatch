@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,7 +12,37 @@ const emptyForm = {
   experienceBullets: [],
   projectBullets: [],
   atsFixesText: "",
+  templateKey: "ats_classic",
+  outputFormat: "docx",
 };
+
+const resumeTemplates = [
+  {
+    key: "ats_classic",
+    name: "ATS Classic",
+    description: "Single-column format for broad ATS compatibility.",
+  },
+  {
+    key: "modern_professional",
+    name: "Modern Professional",
+    description: "Clean layout with polished section hierarchy.",
+  },
+  {
+    key: "technical",
+    name: "Technical",
+    description: "Highlights skills, projects, and engineering detail.",
+  },
+  {
+    key: "executive",
+    name: "Executive",
+    description: "Built around leadership scope and business impact.",
+  },
+  {
+    key: "compact",
+    name: "Compact",
+    description: "Dense format for shorter final resumes.",
+  },
+];
 
 function toTextList(items = []) {
   return items.filter(Boolean).join("\n");
@@ -72,7 +102,7 @@ function EditableBulletList({ title, items, onChange }) {
 export default function TailoredResumeReview() {
   const { id } = useParams();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState(emptyForm);
+  const [localForm, setLocalForm] = useState({ id: null, value: null });
   const [saved, setSaved] = useState(false);
 
   const { data: tailoredResume, isLoading } = useQuery({
@@ -88,18 +118,32 @@ export default function TailoredResumeReview() {
     return tailoredResume.edited_content || tailoredResume.draft_content || {};
   }, [tailoredResume]);
 
-  useEffect(() => {
-    if (!activeContent) return;
-
+  const hydratedForm = useMemo(() => {
+    if (!activeContent) return emptyForm;
     const sections = activeContent.tailored_sections || {};
-    setForm({
+
+    return {
       summary: sections.summary || "",
       skillsText: toTextList(sections.skills || []),
       experienceBullets: sections.experience_bullets || [],
       projectBullets: sections.project_bullets || [],
       atsFixesText: toTextList(activeContent.ats_fixes || []),
+      templateKey: tailoredResume.template_key || "ats_classic",
+      outputFormat: tailoredResume.output_format || "docx",
+    };
+  }, [activeContent, tailoredResume]);
+
+  const form = localForm.id === id && localForm.value ? localForm.value : hydratedForm;
+  const setForm = (updater) => {
+    setLocalForm((current) => {
+      const currentValue =
+        current.id === id && current.value ? current.value : hydratedForm;
+      const nextValue =
+        typeof updater === "function" ? updater(currentValue) : updater;
+
+      return { id, value: nextValue };
     });
-  }, [activeContent]);
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -117,7 +161,11 @@ export default function TailoredResumeReview() {
         ats_fixes: fromTextList(form.atsFixesText),
       };
 
-      const res = await updateTailoredResume(id, editedContent);
+      const res = await updateTailoredResume(id, {
+        editedContent,
+        templateKey: form.templateKey,
+        outputFormat: form.outputFormat,
+      });
       return res.data;
     },
     onSuccess: () => {
@@ -285,10 +333,96 @@ export default function TailoredResumeReview() {
 
         <div className="space-y-5">
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-sm font-semibold text-gray-900 mb-4">Template</h2>
+            <div className="space-y-2">
+              {resumeTemplates.map((template) => {
+                const isSelected = form.templateKey === template.key;
+
+                return (
+                  <button
+                    key={template.key}
+                    type="button"
+                    onClick={() =>
+                      setForm((current) => ({
+                        ...current,
+                        templateKey: template.key,
+                      }))
+                    }
+                    className={`w-full text-left rounded-xl border p-3 transition-all duration-200 ${
+                      isSelected
+                        ? "border-emerald-300 bg-emerald-50 shadow-sm"
+                        : "border-gray-100 bg-gray-50 hover:border-gray-200 hover:bg-white"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {template.name}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {template.description}
+                        </p>
+                      </div>
+                      <span
+                        className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border ${
+                          isSelected
+                            ? "border-emerald-500 bg-emerald-500"
+                            : "border-gray-300 bg-white"
+                        }`}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-5">
+              <h3 className="text-xs font-semibold text-gray-500 mb-2">
+                Output Format
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {["docx", "pdf"].map((format) => {
+                  const isSelected = form.outputFormat === format;
+
+                  return (
+                    <button
+                      key={format}
+                      type="button"
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          outputFormat: format,
+                        }))
+                      }
+                      className={`px-3 py-2 rounded-xl text-sm font-semibold uppercase transition-all duration-200 ${
+                        isSelected
+                          ? "bg-gray-900 text-white"
+                          : "bg-gray-50 text-gray-600 border border-gray-100 hover:bg-white"
+                      }`}
+                    >
+                      {format}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-sm font-semibold text-gray-900 mb-4">Draft Info</h2>
             <div className="space-y-3">
               {[
                 { label: "Status", value: tailoredResume.status },
+                {
+                  label: "Template",
+                  value: resumeTemplates.find(
+                    (template) => template.key === tailoredResume.template_key
+                  )?.name,
+                },
+                {
+                  label: "Format",
+                  value: tailoredResume.output_format?.toUpperCase(),
+                },
                 {
                   label: "Source",
                   value: draft.source_resume?.file_name,
