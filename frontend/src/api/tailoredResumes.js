@@ -14,3 +14,12 @@ export const updateTailoredResume = (
     template_key: templateKey,
     output_format: outputFormat,
   });
+
+export const finalizeTailoredResume = (id, { templateKey, outputFormat }) =>
+  api.post(`/tailored-resumes/${id}/finalize`, {
+    template_key: templateKey,
+    output_format: outputFormat,
+  });
+
+export const downloadTailoredResume = (id) =>
+  api.get(`/tailored-resumes/${id}/download`);

@@ -33,3 +33,13 @@ class TailoredResumeUpdate(BaseModel):
     edited_content: Optional[dict] = None
     template_key: Optional[str] = None
     output_format: Optional[str] = None
+
+
+class TailoredResumeFinalizeRequest(BaseModel):
+    template_key: Optional[str] = None
+    output_format: Optional[str] = None
+
+
+class TailoredResumeDownloadResponse(BaseModel):
+    url: str
+    file_name: str

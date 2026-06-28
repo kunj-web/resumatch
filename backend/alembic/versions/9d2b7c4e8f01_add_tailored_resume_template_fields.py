@@ -34,7 +34,7 @@ def upgrade() -> None:
             "output_format",
             sa.String(length=10),
             nullable=False,
-            server_default="docx",
+            server_default="pdf",
         ),
     )
     op.add_column(
