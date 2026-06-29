@@ -4,15 +4,63 @@ from docx import Document
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    text = ""
+    parts = []
 
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
             page_text = page.extract_text()
             if page_text:
-                text += page_text + "\n"
+                parts.append(page_text)
 
-    return text.strip()
+            link_lines = _extract_pdf_link_lines(page)
+            if link_lines:
+                parts.extend(link_lines)
+
+    return "\n".join(parts).strip()
+
+
+def _extract_pdf_link_lines(page) -> list[str]:
+    link_lines = []
+    hyperlinks = getattr(page, "hyperlinks", None) or []
+
+    for link in hyperlinks:
+        uri = link.get("uri")
+        if not uri:
+            continue
+
+        label = _extract_link_label(page, link)
+        if label:
+            link_lines.append(f"{label}: {uri}")
+        else:
+            link_lines.append(uri)
+
+    return list(dict.fromkeys(link_lines))
+
+
+def _extract_link_label(page, link: dict) -> str:
+    words = page.extract_words() or []
+    top = link.get("top")
+    bottom = link.get("bottom")
+    if top is None or bottom is None:
+        return ""
+
+    same_line_words = [
+        word
+        for word in words
+        if word.get("top", 0) <= bottom + 2 and word.get("bottom", 0) >= top - 2
+    ]
+    if same_line_words:
+        return " ".join(word["text"] for word in same_line_words).strip()
+
+    link_words = [
+        word
+        for word in words
+        if word.get("x0", 0) <= link.get("x1", 0) + 2
+        and word.get("x1", 0) >= link.get("x0", 0) - 2
+        and word.get("top", 0) <= bottom + 2
+        and word.get("bottom", 0) >= top - 2
+    ]
+    return " ".join(word["text"] for word in link_words).strip()
 
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
