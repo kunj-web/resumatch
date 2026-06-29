@@ -8,8 +8,10 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.resume import Resume
+from app.models.job import Job
 from app.models.enums import ResumeProcessingStatus
 from app.schemas.resume import ResumeResponse, ResumeUploadResponse
+from app.services.matcher import match_resume_to_job
 from app.services.parser import parse_resume
 from app.services.supabase_storage import upload_file, delete_file
 
@@ -89,9 +91,44 @@ async def upload_resume(
     await db.commit()
     await db.refresh(resume)
 
+    await rematch_existing_jobs(db, current_user.id, resume.raw_text)
+
     return ResumeUploadResponse(
         message="Resume uploaded and parsed successfully", resume=resume
     )
+
+
+async def rematch_existing_jobs(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    resume_text: str,
+) -> None:
+    result = await db.execute(
+        select(Job)
+        .where(Job.user_id == user_id)
+        .where(Job.deleted_at == None)
+    )
+    jobs = result.scalars().all()
+
+    for job in jobs:
+        if not job.required_skills:
+            continue
+
+        try:
+            match = await match_resume_to_job(
+                resume_text=resume_text,
+                required_skills=job.required_skills,
+                preferred_skills=job.preferred_skills,
+            )
+        except Exception:
+            continue
+
+        job.match_score = match.get("match_score")
+        job.matched_skills = match.get("matched_skills") or []
+        job.missing_skills = match.get("missing_skills") or []
+        job.keyword_gaps = match.get("keyword_gaps") or []
+
+    await db.commit()
 
 
 @router.get("/me", response_model=ResumeResponse)
