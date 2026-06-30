@@ -30,6 +30,10 @@ class User(Base):
         Integer, nullable=False, default=0
     )
 
+    tailor_resume_credits_period: Mapped[str] = mapped_column(
+        String(7), nullable=False, default=""
+    )
+
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
     updated_at: Mapped[datetime] = mapped_column(

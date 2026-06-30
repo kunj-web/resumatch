@@ -13,6 +13,7 @@ from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.user import UserRegister, UserLogin, UserResponse
 from app.schemas.token import Token
+from app.services.plans import ensure_tailor_resume_credit_period
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -60,5 +61,11 @@ async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/me", response_model=UserResponse)
-async def me(current_user: User = Depends(get_current_user)):
+async def me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if ensure_tailor_resume_credit_period(current_user):
+        await db.commit()
+        await db.refresh(current_user)
     return current_user

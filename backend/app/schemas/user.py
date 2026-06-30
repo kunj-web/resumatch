@@ -4,9 +4,10 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, computed_field, field_validator
 
 from app.models.enums import UserPlan
-
-
-FREE_TAILOR_RESUME_CREDIT_LIMIT = 10
+from app.services.plans import (
+    FREE_TAILOR_RESUME_CREDIT_LIMIT,
+    current_credit_period,
+)
 
 
 class UserRegister(BaseModel):
@@ -69,6 +70,7 @@ class UserResponse(BaseModel):
     full_name: str
     plan: UserPlan
     tailor_resume_credits_used: int
+    tailor_resume_credits_period: str
     created_at: datetime
 
     @computed_field
@@ -83,8 +85,13 @@ class UserResponse(BaseModel):
     def tailor_resume_credits_remaining(self) -> Optional[int]:
         if self.plan == UserPlan.PRO:
             return None
+        credits_used = (
+            self.tailor_resume_credits_used
+            if self.tailor_resume_credits_period == current_credit_period()
+            else 0
+        )
         return max(
-            FREE_TAILOR_RESUME_CREDIT_LIMIT - self.tailor_resume_credits_used,
+            FREE_TAILOR_RESUME_CREDIT_LIMIT - credits_used,
             0,
         )
 
