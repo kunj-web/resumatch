@@ -13,7 +13,7 @@ from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.job import Job
 from app.models.resume import Resume
-from app.models.enums import ExtractionStatus, JobStatus
+from app.models.enums import ExtractionStatus, JobStatus, LocationType, JobType
 from app.schemas.job import (
     JobCreate,
     JobResponse,
@@ -32,6 +32,25 @@ from app.schemas.job import (
 )
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+
+def _enum_or_none(enum_class, value):
+    if not value:
+        return None
+    if isinstance(value, str):
+        value = value.lower().replace("_", "-").strip()
+        value = {
+            "fulltime": "full-time",
+            "full time": "full-time",
+            "parttime": "part-time",
+            "part time": "part-time",
+            "on-site": "onsite",
+            "in-person": "onsite",
+        }.get(value, value)
+    try:
+        return enum_class(value)
+    except ValueError:
+        return None
 
 
 async def fetch_url_content(url: str) -> str:
@@ -100,8 +119,8 @@ async def create_job(
         job.title = extracted.get("title")
         job.company = extracted.get("company")
         job.location = extracted.get("location")
-        job.location_type = extracted.get("location_type")
-        job.job_type = extracted.get("job_type")
+        job.location_type = _enum_or_none(LocationType, extracted.get("location_type"))
+        job.job_type = _enum_or_none(JobType, extracted.get("job_type"))
         job.salary_min = extracted.get("salary_min")
         job.salary_max = extracted.get("salary_max")
         job.salary_currency = extracted.get("salary_currency") or "USD"
