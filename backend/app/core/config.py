@@ -13,6 +13,7 @@ class Settings(BaseSettings):
 
     # Groq
     GROQ_API_KEY: str
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
 
     # Supabase Storage
     SUPABASE_URL: str

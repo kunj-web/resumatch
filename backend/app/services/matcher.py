@@ -42,7 +42,7 @@ def _match_sync(
     resume_text: str, required_skills: list, preferred_skills: list
 ) -> dict:
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model=settings.GROQ_MODEL,
         messages=[
             {"role": "system", "content": MATCHER_PROMPT},
             {

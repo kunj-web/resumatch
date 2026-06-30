@@ -137,7 +137,7 @@ def _tailor_sync(
     keyword_gaps: list,
 ) -> dict:
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model=settings.GROQ_MODEL,
         messages=[
             {"role": "system", "content": TAILOR_PROMPT},
             {

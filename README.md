@@ -40,7 +40,7 @@ AI-powered job application tracker and resume matcher. Paste any job posting and
 - **ORM**: SQLAlchemy
 - **Migrations**: Alembic
 - **Authentication**: JWT (python-jose + passlib/argon2)
-- **AI**: Groq API (llama-3.3-70b-versatile)
+- **AI**: Groq API (openai/gpt-oss-120b by default)
 - **PDF Parsing**: pdfplumber
 - **Web Scraping**: httpx + BeautifulSoup4
 - **Validation**: Pydantic
@@ -92,6 +92,7 @@ Create `backend/.env` in the backend directory:
 DATABASE_URL=postgresql://postgres:postgres@db:5432/resumatch
 SECRET_KEY=your-secret-key-here-change-this-in-production
 GROQ_API_KEY=your-groq-api-key-here
+GROQ_MODEL=openai/gpt-oss-120b
 UPLOAD_DIR=uploads
 ```
 
@@ -231,6 +232,7 @@ Create `backend/.env`:
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/resumatch
 SECRET_KEY=your-super-secret-key-change-this
 GROQ_API_KEY=your-groq-api-key
+GROQ_MODEL=openai/gpt-oss-120b
 UPLOAD_DIR=uploads
 ```
 
@@ -385,6 +387,7 @@ resumatch/
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@db:5432/resumatch` |
 | `SECRET_KEY` | JWT signing key (change in production) | `your-super-secret-key` |
 | `GROQ_API_KEY` | Groq API key for AI extraction | `gsk_xxxxxxxx...` |
+| `GROQ_MODEL` | Groq model used for extraction, matching, and tailoring | `openai/gpt-oss-120b` |
 | `UPLOAD_DIR` | Directory for uploaded files | `uploads` |
 
 ### Frontend (`frontend/.env`)
