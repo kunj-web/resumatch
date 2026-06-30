@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
@@ -28,7 +29,7 @@ from app.services.resume_templates import (
     is_allowed_template_key,
 )
 from app.services.supabase_storage import StorageUploadError, get_signed_url, upload_file
-from app.services.tailor import tailor_resume_to_job
+from app.services.tailor import ensure_resume_summary, tailor_resume_to_job
 
 
 router = APIRouter(tags=["tailored-resumes"])
@@ -95,6 +96,29 @@ async def create_tailored_resume(
     existing_tailored_resume = existing_result.scalar_one_or_none()
 
     if existing_tailored_resume:
+        repaired = False
+        draft_content = existing_tailored_resume.draft_content or {}
+        summary_before = (draft_content.get("tailored_sections") or {}).get("summary")
+        ensure_resume_summary(draft_content, resume.raw_text)
+        summary_after = (draft_content.get("tailored_sections") or {}).get("summary")
+        if not summary_before and summary_after:
+            existing_tailored_resume.draft_content = draft_content
+            flag_modified(existing_tailored_resume, "draft_content")
+            repaired = True
+
+        if existing_tailored_resume.edited_content:
+            edited_content = existing_tailored_resume.edited_content
+            summary_before = (edited_content.get("tailored_sections") or {}).get("summary")
+            ensure_resume_summary(edited_content, resume.raw_text)
+            summary_after = (edited_content.get("tailored_sections") or {}).get("summary")
+            if not summary_before and summary_after:
+                existing_tailored_resume.edited_content = edited_content
+                flag_modified(existing_tailored_resume, "edited_content")
+                repaired = True
+
+        if repaired:
+            await db.commit()
+            await db.refresh(existing_tailored_resume)
         return existing_tailored_resume
 
     if not can_tailor_resume(current_user):
@@ -119,10 +143,24 @@ async def create_tailored_resume(
             missing_skills=job.missing_skills,
             keyword_gaps=job.keyword_gaps,
         )
-    except Exception:
+    except Exception as exc:
+        logger.exception("Failed to generate tailored resume draft")
+        if type(exc).__name__ == "RateLimitError":
+            detail = (
+                "AI tailoring is temporarily rate limited. Please wait a minute "
+                "and try again. No credit was used."
+            )
+        elif type(exc).__name__ == "APIStatusError" and getattr(exc, "status_code", None) == 413:
+            detail = (
+                "This resume and job post are a little too large for the AI limit. "
+                "The app retried with a smaller request, but it still failed. No credit was used."
+            )
+        else:
+            detail = "Could not generate tailored resume draft. No credit was used."
+
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Could not generate tailored resume draft. Please try again.",
+            detail=detail,
         )
 
     tailored_resume = TailoredResume(
@@ -178,6 +216,37 @@ async def get_tailored_resume(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tailored resume not found",
         )
+
+    resume_result = await db.execute(
+        select(Resume)
+        .where(Resume.id == tailored_resume.source_resume_id)
+        .where(Resume.user_id == current_user.id)
+    )
+    source_resume = resume_result.scalar_one_or_none()
+    if source_resume:
+        repaired = False
+        draft_content = tailored_resume.draft_content or {}
+        summary_before = (draft_content.get("tailored_sections") or {}).get("summary")
+        ensure_resume_summary(draft_content, source_resume.raw_text)
+        summary_after = (draft_content.get("tailored_sections") or {}).get("summary")
+        if not summary_before and summary_after:
+            tailored_resume.draft_content = draft_content
+            flag_modified(tailored_resume, "draft_content")
+            repaired = True
+
+        if tailored_resume.edited_content:
+            edited_content = tailored_resume.edited_content
+            summary_before = (edited_content.get("tailored_sections") or {}).get("summary")
+            ensure_resume_summary(edited_content, source_resume.raw_text)
+            summary_after = (edited_content.get("tailored_sections") or {}).get("summary")
+            if not summary_before and summary_after:
+                tailored_resume.edited_content = edited_content
+                flag_modified(tailored_resume, "edited_content")
+                repaired = True
+
+        if repaired:
+            await db.commit()
+            await db.refresh(tailored_resume)
 
     return tailored_resume
 

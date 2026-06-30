@@ -1,8 +1,29 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getMe } from "../api/auth";
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const accessToken = localStorage.getItem("access_token");
+
+  const { data: user } = useQuery({
+    queryKey: ["me"],
+    queryFn: async () => {
+      const res = await getMe();
+      return res.data;
+    },
+    enabled: Boolean(accessToken),
+    retry: false,
+  });
+
+  const isPro = user?.plan === "pro";
+  const creditLimit = user?.tailor_resume_credit_limit;
+  const creditsRemaining = user?.tailor_resume_credits_remaining;
+  const creditsUsed =
+    typeof creditLimit === "number" && typeof creditsRemaining === "number"
+      ? creditLimit - creditsRemaining
+      : null;
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
@@ -86,8 +107,53 @@ export default function Layout({ children }) {
           })}
         </nav>
 
-        {/* Bottom — Logout */}
-        <div className="px-4 py-6 border-t border-white/10">
+        {/* Bottom */}
+        <div className="px-4 py-6 border-t border-white/10 space-y-3">
+          {user && (
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-normal text-gray-400">
+                    {isPro ? "Pro plan" : "Free plan"}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-white">
+                    {isPro
+                      ? "Unlimited tailoring"
+                      : `${creditsRemaining ?? 0} / ${
+                          creditLimit ?? 10
+                        } resumes left`}
+                  </div>
+                </div>
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    isPro ? "bg-emerald-400" : "bg-amber-400"
+                  }`}
+                />
+              </div>
+              {!isPro && typeof creditsUsed === "number" && (
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-emerald-400"
+                    style={{
+                      width: `${Math.min(
+                        Math.max((creditsUsed / (creditLimit || 10)) * 100, 0),
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              )}
+              {!isPro && (
+                <button
+                  type="button"
+                  className="mt-3 w-full rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-900 transition-all duration-200 hover:bg-emerald-50 active:scale-95"
+                >
+                  Upgrade
+                </button>
+              )}
+            </div>
+          )}
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/5 hover:text-red-400 transition-all duration-200 w-full"

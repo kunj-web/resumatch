@@ -163,10 +163,11 @@ export default function JobDetail() {
       const res = await createTailoredResume(id);
       return res.data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setTailoredResume(data);
       setTailorError("");
-      queryClient.invalidateQueries(["me"]);
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
+      await queryClient.refetchQueries({ queryKey: ["me"] });
       navigate(`/tailored-resumes/${data.id}`);
     },
     onError: (err) => {
