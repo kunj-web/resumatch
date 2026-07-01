@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getJob, updateJobStatus, deleteJob } from "../api/jobs";
 import { createTailoredResume } from "../api/tailoredResumes";
+import UpgradeModal from "../components/UpgradeModal";
 
 const STATUS_OPTIONS = [
   {
@@ -121,6 +122,7 @@ export default function JobDetail() {
   // All state declarations first
   const [visible, setVisible] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [tailoredResume, setTailoredResume] = useState(null);
   const [tailorError, setTailorError] = useState("");
 
@@ -171,6 +173,12 @@ export default function JobDetail() {
       navigate(`/tailored-resumes/${data.id}`);
     },
     onError: (err) => {
+      if (err.response?.status === 402) {
+        setTailorError("");
+        setShowUpgradeModal(true);
+        return;
+      }
+
       setTailorError(
         err.response?.data?.detail || "Could not tailor this resume yet."
       );
@@ -399,6 +407,12 @@ export default function JobDetail() {
           </a>
         )}
       </div>
+
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        message="You have used your 10 free tailored resumes this month. Upgrade to Pro when you are ready for more tailoring."
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left column */}
