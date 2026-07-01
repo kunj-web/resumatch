@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_ROLE_KEY: str
     SUPABASE_BUCKET: str = "resumes"
 
+    # Razorpay Billing
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    RAZORPAY_PLAN_ID: str = ""
+    RAZORPAY_WEBHOOK_SECRET: str = ""
+    FRONTEND_URL: str = "http://localhost:5173"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
