@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { recordUpgradeInterest } from "../api/billing";
 
 export default function UpgradeModal({
   open,
@@ -6,13 +7,35 @@ export default function UpgradeModal({
   title = "Upgrade to Pro",
   message = "You have used your free tailored resumes for this month.",
 }) {
-  const [showCheckoutNote, setShowCheckoutNote] = useState(false);
+  const [status, setStatus] = useState("idle");
+  const [feedback, setFeedback] = useState("");
 
   if (!open) return null;
 
   const handleClose = () => {
-    setShowCheckoutNote(false);
+    setStatus("idle");
+    setFeedback("");
     onClose();
+  };
+
+  const handleUpgradeInterest = async () => {
+    setStatus("pending");
+    setFeedback("");
+
+    try {
+      const res = await recordUpgradeInterest();
+      setStatus("success");
+      setFeedback(
+        res.data?.message ||
+          "You are on the Pro interest list. Checkout will be connected next."
+      );
+    } catch (err) {
+      setStatus("error");
+      setFeedback(
+        err.response?.data?.detail ||
+          "Could not record upgrade interest. Please try again."
+      );
+    }
   };
 
   return (
@@ -98,10 +121,15 @@ export default function UpgradeModal({
             </div>
           </div>
 
-          {showCheckoutNote && (
-            <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-              Payment checkout is not connected yet. This is the next integration
-              point for Stripe or Razorpay.
+          {feedback && (
+            <div
+              className={`mt-4 rounded-lg border px-3 py-2 text-xs ${
+                status === "success"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-red-200 bg-red-50 text-red-600"
+              }`}
+            >
+              {feedback}
             </div>
           )}
         </div>
@@ -116,10 +144,15 @@ export default function UpgradeModal({
           </button>
           <button
             type="button"
-            onClick={() => setShowCheckoutNote(true)}
-            className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all duration-200"
+            onClick={handleUpgradeInterest}
+            disabled={status === "pending" || status === "success"}
+            className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Upgrade to Pro
+            {status === "pending"
+              ? "Saving..."
+              : status === "success"
+              ? "Interest saved"
+              : "Upgrade to Pro"}
           </button>
         </div>
       </div>
