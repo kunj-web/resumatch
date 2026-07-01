@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.upgrade_interest import UpgradeInterest
 from app.models.user import User
+from app.services.billing import razorpay_checkout_status
 
 
 router = APIRouter(prefix="/billing", tags=["billing"])
@@ -18,6 +19,21 @@ logger = logging.getLogger(__name__)
 
 class UpgradeInterestRequest(BaseModel):
     source: str = "upgrade_modal"
+
+
+@router.post("/create-checkout-session")
+async def create_checkout_session(current_user: User = Depends(get_current_user)):
+    status_payload = razorpay_checkout_status()
+    logger.info(
+        "Checkout session requested",
+        extra={
+            "user_id": str(current_user.id),
+            "email": current_user.email,
+            "provider": status_payload["provider"],
+            "status": status_payload["status"],
+        },
+    )
+    return status_payload
 
 
 @router.post("/upgrade-interest")
