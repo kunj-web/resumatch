@@ -1,4 +1,5 @@
 import uuid
+import copy
 from datetime import datetime
 import logging
 
@@ -34,6 +35,15 @@ from app.services.tailor import ensure_resume_summary, tailor_resume_to_job
 
 router = APIRouter(tags=["tailored-resumes"])
 logger = logging.getLogger(__name__)
+
+
+def _repair_tailored_content(content: dict | None, resume_text: str) -> tuple[dict, bool]:
+    if not content:
+        return {}, False
+
+    before = copy.deepcopy(content)
+    repaired = ensure_resume_summary(content, resume_text)
+    return repaired, repaired != before
 
 
 @router.post(
@@ -97,21 +107,21 @@ async def create_tailored_resume(
 
     if existing_tailored_resume:
         repaired = False
-        draft_content = existing_tailored_resume.draft_content or {}
-        summary_before = (draft_content.get("tailored_sections") or {}).get("summary")
-        ensure_resume_summary(draft_content, resume.raw_text)
-        summary_after = (draft_content.get("tailored_sections") or {}).get("summary")
-        if not summary_before and summary_after:
+        draft_content, draft_repaired = _repair_tailored_content(
+            existing_tailored_resume.draft_content,
+            resume.raw_text,
+        )
+        if draft_repaired:
             existing_tailored_resume.draft_content = draft_content
             flag_modified(existing_tailored_resume, "draft_content")
             repaired = True
 
         if existing_tailored_resume.edited_content:
-            edited_content = existing_tailored_resume.edited_content
-            summary_before = (edited_content.get("tailored_sections") or {}).get("summary")
-            ensure_resume_summary(edited_content, resume.raw_text)
-            summary_after = (edited_content.get("tailored_sections") or {}).get("summary")
-            if not summary_before and summary_after:
+            edited_content, edited_repaired = _repair_tailored_content(
+                existing_tailored_resume.edited_content,
+                resume.raw_text,
+            )
+            if edited_repaired:
                 existing_tailored_resume.edited_content = edited_content
                 flag_modified(existing_tailored_resume, "edited_content")
                 repaired = True
@@ -225,21 +235,21 @@ async def get_tailored_resume(
     source_resume = resume_result.scalar_one_or_none()
     if source_resume:
         repaired = False
-        draft_content = tailored_resume.draft_content or {}
-        summary_before = (draft_content.get("tailored_sections") or {}).get("summary")
-        ensure_resume_summary(draft_content, source_resume.raw_text)
-        summary_after = (draft_content.get("tailored_sections") or {}).get("summary")
-        if not summary_before and summary_after:
+        draft_content, draft_repaired = _repair_tailored_content(
+            tailored_resume.draft_content,
+            source_resume.raw_text,
+        )
+        if draft_repaired:
             tailored_resume.draft_content = draft_content
             flag_modified(tailored_resume, "draft_content")
             repaired = True
 
         if tailored_resume.edited_content:
-            edited_content = tailored_resume.edited_content
-            summary_before = (edited_content.get("tailored_sections") or {}).get("summary")
-            ensure_resume_summary(edited_content, source_resume.raw_text)
-            summary_after = (edited_content.get("tailored_sections") or {}).get("summary")
-            if not summary_before and summary_after:
+            edited_content, edited_repaired = _repair_tailored_content(
+                tailored_resume.edited_content,
+                source_resume.raw_text,
+            )
+            if edited_repaired:
                 tailored_resume.edited_content = edited_content
                 flag_modified(tailored_resume, "edited_content")
                 repaired = True
