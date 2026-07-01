@@ -1,6 +1,21 @@
 import { useState } from "react";
 import { recordUpgradeInterest } from "../api/billing";
 
+const FREE_FEATURES = [
+  "10 tailored resumes per month",
+  "ATS Classic limited to monthly credits",
+  "Basic resume template",
+  "PDF export",
+];
+
+const PRO_FEATURES = [
+  "Higher tailoring limits",
+  "ATS Classic beyond the free monthly limit",
+  "All resume templates",
+  "PDF and DOCX export",
+  "Priority AI improvements",
+];
+
 export default function UpgradeModal({
   open,
   onClose,
@@ -48,7 +63,7 @@ export default function UpgradeModal({
         onClick={handleClose}
       />
 
-      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl shadow-gray-900/20 border border-gray-100 overflow-hidden">
+      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl shadow-gray-900/20 border border-gray-100 overflow-hidden">
         <div className="px-6 pt-6 pb-5">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -93,33 +108,67 @@ export default function UpgradeModal({
             </button>
           </div>
 
-          <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold text-gray-900">Pro</div>
-                <div className="mt-1 text-xs text-gray-500">
-                  Built for active job search
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">Free</div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Good for trying the workflow
+                  </div>
+                </div>
+                <div className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                  Current
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-gray-900">Coming soon</div>
-                <div className="text-xs text-gray-500">checkout pending</div>
+              <div className="mt-4 space-y-2 text-sm text-gray-700">
+                {FREE_FEATURES.map((item) => (
+                  <div key={item} className="flex items-start gap-2">
+                    <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-gray-400" />
+                    <span>{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="mt-4 space-y-2 text-sm text-gray-700">
-              {[
-                "More tailored resumes each month",
-                "ATS Classic after the free monthly limit",
-                "All resume templates",
-                "PDF and DOCX export",
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span>{item}</span>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-gray-900">Pro</div>
+                  <div className="mt-1 text-xs text-gray-600">
+                    Built for active job search
+                  </div>
                 </div>
-              ))}
+                <div className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                  Planned
+                </div>
+              </div>
+              <div className="mt-4 space-y-2 text-sm text-gray-800">
+                {PRO_FEATURES.map((item) => (
+                  <div key={item} className="flex items-start gap-2">
+                    <svg
+                      className="mt-0.5 h-4 w-4 flex-none text-emerald-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+            Checkout is not connected yet. Clicking Upgrade to Pro records your
+            interest so the payment flow can be added with real demand data.
           </div>
 
           {feedback && (
