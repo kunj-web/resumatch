@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getMe } from "../api/auth";
+import UpgradeModal from "./UpgradeModal";
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
   const accessToken = localStorage.getItem("access_token");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ["me"],
@@ -146,6 +149,7 @@ export default function Layout({ children }) {
               {!isPro && (
                 <button
                   type="button"
+                  onClick={() => setShowUpgradeModal(true)}
                   className="mt-3 w-full rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-900 transition-all duration-200 hover:bg-emerald-50 active:scale-95"
                 >
                   Upgrade
@@ -226,6 +230,12 @@ export default function Layout({ children }) {
       <main className="flex-1 lg:ml-64 pt-16 lg:pt-0 min-w-0">
         <div className="p-6 lg:p-10 xl:p-12">{children}</div>
       </main>
+
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        message="Upgrade when you are ready to unlock higher tailoring limits and Pro resume tools."
+      />
     </div>
   );
 }
