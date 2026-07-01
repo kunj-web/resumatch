@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import pool
 from alembic import context
 from app.core.config import settings
-from app.models import Base, User, Resume, Job
+from app.models import Base, User, Resume, Job, TailoredResume, UpgradeInterest
 
 # Alembic Config object
 config = context.config

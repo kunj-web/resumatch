@@ -12,6 +12,7 @@ from app.models.user import User
 from app.models.resume import Resume
 from app.models.job import Job
 from app.models.tailored_resume import TailoredResume
+from app.models.upgrade_interest import UpgradeInterest
 
 __all__ = [
     "Base",
@@ -26,4 +27,5 @@ __all__ = [
     "Resume",
     "Job",
     "TailoredResume",
+    "UpgradeInterest",
 ]

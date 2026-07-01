@@ -6,6 +6,7 @@ export default function UpgradeModal({
   onClose,
   title = "Upgrade to Pro",
   message = "You have used your free tailored resumes for this month.",
+  source = "upgrade_modal",
 }) {
   const [status, setStatus] = useState("idle");
   const [feedback, setFeedback] = useState("");
@@ -23,7 +24,7 @@ export default function UpgradeModal({
     setFeedback("");
 
     try {
-      const res = await recordUpgradeInterest();
+      const res = await recordUpgradeInterest(source);
       setStatus("success");
       setFeedback(
         res.data?.message ||

@@ -411,6 +411,7 @@ export default function JobDetail() {
       <UpgradeModal
         open={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
+        source="tailor_limit"
         message="You have used your 10 free tailored resumes this month. Upgrade to Pro when you are ready for more tailoring."
       />
 

@@ -234,6 +234,7 @@ export default function Layout({ children }) {
       <UpgradeModal
         open={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
+        source="sidebar"
         message="Upgrade when you are ready to unlock higher tailoring limits and Pro resume tools."
       />
     </div>
