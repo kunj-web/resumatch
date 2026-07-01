@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { recordUpgradeInterest } from "../api/billing";
+import { createCheckoutSession, recordUpgradeInterest } from "../api/billing";
 
 const FREE_FEATURES = [
   "10 tailored resumes per month",
@@ -34,15 +34,24 @@ export default function UpgradeModal({
     onClose();
   };
 
-  const handleUpgradeInterest = async () => {
+  const handleUpgradeClick = async () => {
     setStatus("pending");
     setFeedback("");
 
     try {
-      const res = await recordUpgradeInterest(source);
+      const checkoutRes = await createCheckoutSession();
+      const checkoutData = checkoutRes.data || {};
+
+      if (checkoutData.checkout_url) {
+        window.location.href = checkoutData.checkout_url;
+        return;
+      }
+
+      const interestRes = await recordUpgradeInterest(source);
       setStatus("success");
       setFeedback(
-        res.data?.message ||
+        checkoutData.message ||
+          interestRes.data?.message ||
           "You are on the Pro interest list. Checkout will be connected next."
       );
     } catch (err) {
@@ -194,14 +203,14 @@ export default function UpgradeModal({
           </button>
           <button
             type="button"
-            onClick={handleUpgradeInterest}
+            onClick={handleUpgradeClick}
             disabled={status === "pending" || status === "success"}
             className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {status === "pending"
-              ? "Saving..."
+              ? "Checking checkout..."
               : status === "success"
-              ? "Interest saved"
+              ? "Saved"
               : "Upgrade to Pro"}
           </button>
         </div>
