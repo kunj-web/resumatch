@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createCheckoutSession, recordUpgradeInterest } from "../api/billing";
+import { loadRazorpayCheckout } from "../utils/razorpay";
 
 const FREE_FEATURES = [
   "10 tailored resumes per month",
@@ -23,18 +24,28 @@ export default function UpgradeModal({
   message = "You have used your free tailored resumes for this month.",
   source = "upgrade_modal",
 }) {
+  const [selectedPlan, setSelectedPlan] = useState("pro");
   const [status, setStatus] = useState("idle");
   const [feedback, setFeedback] = useState("");
 
   if (!open) return null;
 
   const handleClose = () => {
+    setSelectedPlan("pro");
     setStatus("idle");
     setFeedback("");
     onClose();
   };
 
+  const handlePlanSelect = (plan) => {
+    setSelectedPlan(plan);
+    setStatus("idle");
+    setFeedback("");
+  };
+
   const handleUpgradeClick = async () => {
+    if (selectedPlan !== "pro") return;
+
     setStatus("pending");
     setFeedback("");
 
@@ -44,6 +55,35 @@ export default function UpgradeModal({
 
       if (checkoutData.checkout_url) {
         window.location.href = checkoutData.checkout_url;
+        return;
+      }
+
+      if (checkoutData.checkout_options) {
+        const loaded = await loadRazorpayCheckout();
+        if (!loaded || !window.Razorpay) {
+          setStatus("error");
+          setFeedback("Could not load Razorpay checkout. Please try again.");
+          return;
+        }
+
+        const razorpay = new window.Razorpay({
+          ...checkoutData.checkout_options,
+          handler: () => {
+            setStatus("success");
+            setFeedback(
+              "Payment received. Pro activation will complete after verification."
+            );
+          },
+          modal: {
+            ondismiss: () => {
+              setStatus("idle");
+              setFeedback("Checkout closed. Your plan was not changed.");
+            },
+          },
+        });
+
+        razorpay.open();
+        setStatus("idle");
         return;
       }
 
@@ -118,7 +158,15 @@ export default function UpgradeModal({
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <button
+              type="button"
+              onClick={() => handlePlanSelect("free")}
+              className={`rounded-xl border p-4 text-left transition-all duration-200 ${
+                selectedPlan === "free"
+                  ? "border-gray-900 bg-gray-50 shadow-sm"
+                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+              }`}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-gray-900">Free</div>
@@ -127,7 +175,7 @@ export default function UpgradeModal({
                   </div>
                 </div>
                 <div className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
-                  Current
+                  {selectedPlan === "free" ? "Selected" : "Current"}
                 </div>
               </div>
               <div className="mt-4 space-y-2 text-sm text-gray-700">
@@ -138,9 +186,17 @@ export default function UpgradeModal({
                   </div>
                 ))}
               </div>
-            </div>
+            </button>
 
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+            <button
+              type="button"
+              onClick={() => handlePlanSelect("pro")}
+              className={`rounded-xl border p-4 text-left transition-all duration-200 ${
+                selectedPlan === "pro"
+                  ? "border-emerald-500 bg-emerald-50 shadow-sm"
+                  : "border-emerald-200 bg-emerald-50/60 hover:border-emerald-300"
+              }`}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-gray-900">Pro</div>
@@ -149,7 +205,7 @@ export default function UpgradeModal({
                   </div>
                 </div>
                 <div className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                  Planned
+                  {selectedPlan === "pro" ? "Selected" : "Planned"}
                 </div>
               </div>
               <div className="mt-4 space-y-2 text-sm text-gray-800">
@@ -172,13 +228,20 @@ export default function UpgradeModal({
                   </div>
                 ))}
               </div>
-            </div>
+            </button>
           </div>
 
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
-            Checkout is not connected yet. Clicking Upgrade to Pro records your
-            interest so the payment flow can be added with real demand data.
-          </div>
+          {selectedPlan === "pro" ? (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+              Checkout is not connected yet. Clicking Upgrade to Pro records your
+              interest so the payment flow can be added with real demand data.
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs leading-5 text-gray-600">
+              You are currently viewing the Free plan. Select Pro when you want to
+              continue to checkout.
+            </div>
+          )}
 
           {feedback && (
             <div
@@ -204,10 +267,16 @@ export default function UpgradeModal({
           <button
             type="button"
             onClick={handleUpgradeClick}
-            disabled={status === "pending" || status === "success"}
+            disabled={
+              selectedPlan !== "pro" ||
+              status === "pending" ||
+              status === "success"
+            }
             className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700 active:scale-95 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {status === "pending"
+            {selectedPlan !== "pro"
+              ? "Free selected"
+              : status === "pending"
               ? "Checking checkout..."
               : status === "success"
               ? "Saved"
