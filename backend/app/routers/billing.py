@@ -10,7 +10,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.upgrade_interest import UpgradeInterest
 from app.models.user import User
-from app.services.billing import razorpay_checkout_status
+from app.services.billing import create_razorpay_checkout
 
 
 router = APIRouter(prefix="/billing", tags=["billing"])
@@ -23,7 +23,17 @@ class UpgradeInterestRequest(BaseModel):
 
 @router.post("/create-checkout-session")
 async def create_checkout_session(current_user: User = Depends(get_current_user)):
-    status_payload = razorpay_checkout_status()
+    try:
+        status_payload = create_razorpay_checkout(current_user)
+    except Exception:
+        logger.exception("Failed to create Razorpay checkout")
+        status_payload = {
+            "status": "provider_error",
+            "provider": "razorpay",
+            "message": "Could not create Razorpay checkout right now.",
+            "checkout_url": None,
+        }
+
     logger.info(
         "Checkout session requested",
         extra={
