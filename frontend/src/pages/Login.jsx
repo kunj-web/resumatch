@@ -25,7 +25,7 @@ export default function Login() {
     },
     onSuccess: (data) => {
       localStorage.setItem("access_token", data.access_token);
-      navigate("/");
+      navigate("/dashboard");
     },
     onError: (err) => {
       setError(err.response?.data?.detail || "Invalid email or password");

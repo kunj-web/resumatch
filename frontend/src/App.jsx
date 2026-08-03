@@ -7,6 +7,7 @@ import AddJob from "./pages/AddJob";
 import JobDetail from "./pages/JobDetail";
 import TailoredResumeReview from "./pages/TailoredResumeReview";
 import Layout from "./components/Layout";
+import Landing from "./pages/Landing";
 
 // Single QueryClient instance — shared cache across all pages
 const queryClient = new QueryClient({
@@ -30,8 +31,9 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Landing />} />
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <Dashboard />

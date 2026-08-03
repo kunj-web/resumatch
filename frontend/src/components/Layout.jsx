@@ -36,7 +36,7 @@ export default function Layout({ children }) {
   const navItems = [
     {
       label: "Dashboard",
-      path: "/",
+      path: "/dashboard",
       icon: (
         <svg
           className="w-5 h-5"
