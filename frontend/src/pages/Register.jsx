@@ -30,7 +30,7 @@ export default function Register() {
     },
     onSuccess: (data) => {                    
     localStorage.setItem("access_token", data.access_token);  
-    navigate("/");
+    navigate("/dashboard");
     },
     onError: (err) => {
       setError(err.response?.data?.detail || "Something went wrong");
