@@ -81,7 +81,7 @@ export default function Landing() {
             <p className="mb-6 text-sm font-extrabold uppercase tracking-[0.18em] text-[#9bf6d7]">
               AI Resume Matching
             </p>
-            <h1 className="max-w-[780px] text-[clamp(3rem,7vw,6.5rem)] font-black leading-[0.96] tracking-normal">
+            <h1 className="max-w-[780px] text-[clamp(3rem,7vw,6.5rem)] font-black leading-[0.96] tracking-normal text-white!">
               Resumatch turns each job into your strongest resume.
             </h1>
             <p className="mt-8 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
@@ -195,8 +195,8 @@ export default function Landing() {
                 Track every application in one intelligent workspace
               </h2>
               <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-500 sm:text-base">
-                Jobs, resumes, billing upgrades, and tailored reviews become
-                one fast decision loop.
+                Jobs, resumes, billing upgrades, and tailored reviews become one
+                fast decision loop.
               </p>
             </div>
           </div>
