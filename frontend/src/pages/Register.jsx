@@ -115,8 +115,14 @@ export default function Register() {
 
       {/* Background layers — all behind content, never intersect it visually */}
       <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_80%_18%,rgba(246,166,66,0.22),transparent_28%),radial-gradient(circle_at_18%_72%,rgba(76,242,198,0.16),transparent_30%),linear-gradient(132deg,#06110f_0%,#11161b_54%,#171b16_140%)]" />
-      <div className="pointer-events-none absolute left-[6%] top-[14%] -z-10 hidden h-48 w-48 rounded-full border border-[#9bf6d7]/10 lg:block" style={{ animation: "signup-orbit 24s linear infinite" }} />
-      <div className="pointer-events-none absolute right-[6%] bottom-[8%] -z-10 hidden h-56 w-56 rounded-full border border-[#f6a642]/10 lg:block" style={{ animation: "signup-orbit 30s linear infinite reverse" }} />
+      <div
+        className="pointer-events-none absolute left-[6%] top-[14%] -z-10 hidden h-48 w-48 rounded-full border border-[#9bf6d7]/10 lg:block"
+        style={{ animation: "signup-orbit 24s linear infinite" }}
+      />
+      <div
+        className="pointer-events-none absolute right-[6%] bottom-[8%] -z-10 hidden h-56 w-56 rounded-full border border-[#f6a642]/10 lg:block"
+        style={{ animation: "signup-orbit 30s linear infinite reverse" }}
+      />
 
       <div className="mx-auto flex h-full max-w-7xl flex-col px-5 sm:px-8 lg:px-12">
         {/* Nav */}
@@ -158,7 +164,9 @@ export default function Register() {
                     </h1>
                   </div>
                   <div className="hidden shrink-0 rounded-xl border border-[#e1ded4] bg-white px-2.5 py-1 text-center sm:block">
-                    <div className="text-sm font-black leading-none text-[#28a990]">10</div>
+                    <div className="text-sm font-black leading-none text-[#28a990]">
+                      10
+                    </div>
                     <div className="text-[8px] font-bold uppercase tracking-[0.06em] text-slate-500">
                       Free
                     </div>
@@ -252,7 +260,9 @@ export default function Register() {
                 >
                   <span
                     className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent"
-                    style={{ animation: "signup-scan 2.8s ease-in-out infinite" }}
+                    style={{
+                      animation: "signup-scan 2.8s ease-in-out infinite",
+                    }}
                   />
                   <span className="relative">
                     {registerMutation.isPending
@@ -283,7 +293,7 @@ export default function Register() {
             <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#9bf6d7]">
               Start smarter
             </p>
-            <h2 className="text-[clamp(1.5rem,2.6vw,2.4rem)] font-black leading-[1.05] tracking-normal">
+            <h2 className="text-[clamp(1.5rem,2.6vw,2.4rem)] font-black leading-[1.05] tracking-normal text-white!">
               Create once. Tailor every application.
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
