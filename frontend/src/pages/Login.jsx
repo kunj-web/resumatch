@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { login } from "../api/auth";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,22 +16,18 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const response = await login({
+        email: email.toLowerCase(),
+        password,
       });
 
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || "Couldn't sign you in. Check your details and try again.");
-      }
-
-      const data = await response.json();
-      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("access_token", response.data.access_token);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.message || "Something went wrong. Try again.");
+      setError(
+        err.response?.data?.detail ||
+          "Couldn't sign you in. Check your details and try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
