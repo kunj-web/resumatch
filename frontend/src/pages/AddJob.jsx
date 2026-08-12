@@ -123,7 +123,7 @@ export default function AddJob() {
                   </p>
                 </div>
                 {resume && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/20 px-3 py-1 text-xs font-medium text-emerald-200 justify-self-start sm:justify-self-end">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/40 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-200 justify-self-start sm:justify-self-end">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                     Active
                   </span>
@@ -131,7 +131,7 @@ export default function AddJob() {
               </div>
 
               <div className="rounded-[24px] border border-white/10 bg-[#0d1617] p-5 sm:p-6">
-                <div className="mb-4 text-sm font-semibold text-slate-300">
+                <div className="mb-4 text-sm font-semibold text-white">
                   {resumeLoading
                     ? "Checking resume..."
                     : resume
@@ -145,7 +145,7 @@ export default function AddJob() {
                       <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <span>
+                      <span className={resumeFile ? "text-white" : "text-slate-300"}>
                         {resumeFile
                           ? resumeFile.name
                           : resume
@@ -174,12 +174,12 @@ export default function AddJob() {
                 </form>
 
                 {resumeSuccess && (
-                  <div className="mt-4 rounded-2xl bg-emerald-50/20 border border-emerald-200 px-4 py-3 text-sm text-emerald-100">
+                  <div className="mt-4 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 px-4 py-3 text-sm text-emerald-200">
                     ✓ Resume uploaded successfully — match scores will now be calculated.
                   </div>
                 )}
                 {uploadResumeMutation.isError && (
-                  <div className="mt-4 rounded-2xl bg-red-50/20 border border-red-200 px-4 py-3 text-sm text-red-100">
+                  <div className="mt-4 rounded-2xl bg-red-500/10 border border-red-400/30 px-4 py-3 text-sm text-red-200">
                     Failed to upload resume. Please try again.
                   </div>
                 )}
@@ -200,105 +200,114 @@ export default function AddJob() {
               </div>
 
               <div className="rounded-[24px] border border-white/10 bg-[#0d1617] p-5">
-                <div className="flex gap-2 rounded-2xl bg-slate-950/70 p-3 text-xs uppercase tracking-[0.15em] text-slate-400">
-                  <span className="font-black">Step 1</span>
+                <div className="flex items-center gap-2 rounded-2xl bg-slate-950/70 p-3 text-xs uppercase tracking-[0.15em] text-slate-400">
+                  <span className="font-black text-[#9bf6d7]">Step 1</span>
                   <span>Submit job information</span>
                 </div>
 
-                <div className="mt-5">
-                  <div className="flex flex-col gap-2 rounded-2xl bg-slate-900/90 p-3 sm:flex-row sm:items-center sm:gap-2">
-                    <div className="text-xs uppercase tracking-[0.15em] text-slate-400">
-                      <span className="font-black">Step 1</span>
-                      <span className="block sm:inline"> Submit job information</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 flex flex-col gap-2 rounded-full bg-slate-900/90 p-1 sm:flex-row">
-                    {[
-                      { key: "url", label: "Paste URL" },
-                      { key: "paste", label: "Paste Text" },
-                    ].map((t) => (
-                      <button
-                        key={t.key}
-                        type="button"
-                        onClick={() => {
-                          setTab(t.key);
-                          setError("");
-                        }}
-                        className={`w-full rounded-2xl px-4 py-2 text-sm font-semibold transition sm:w-auto ${
-                          tab === t.key
-                            ? "bg-[#111b1c] text-white shadow-inner"
-                            : "text-slate-400 hover:text-white"
-                        }`}
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <form onSubmit={handleJobSubmit} className="mt-6 space-y-4">
-                    {tab === "url" ? (
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                          Job post URL
-                        </label>
-                        <input
-                          type="url"
-                          value={url}
-                          onChange={(e) => setUrl(e.target.value)}
-                          placeholder="https://jobs.lever.co/company/job-id"
-                          className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/20"
-                        />
-                        <p className="mt-2 text-xs text-slate-500">
-                          ⚠ LinkedIn and Indeed block scraping — use Paste Text for those.
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                          Job description
-                        </label>
-                        <textarea
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          placeholder="Paste the full job description here..."
-                          rows={10}
-                          className="w-full resize-none rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white outline-none transition focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/20"
-                        />
-                      </div>
-                    )}
-
-                    {error && (
-                      <div className="rounded-2xl bg-red-50/20 border border-red-200 px-4 py-3 text-sm text-red-100">
-                        {error}
-                      </div>
-                    )}
-
-                    {!resume && !resumeLoading && (
-                      <div className="rounded-2xl bg-amber-50/20 border border-amber-200 px-4 py-3 text-sm text-amber-100">
-                        ⚠ No resume uploaded — job will be saved but match score won't be calculated.
-                      </div>
-                    )}
-
+                {/* Source tabs */}
+                <div className="mt-5 flex gap-2 rounded-2xl bg-slate-950/70 p-1.5">
+                  {[
+                    {
+                      key: "url",
+                      label: "Paste URL",
+                      icon: (
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5" />
+                        </svg>
+                      ),
+                    },
+                    {
+                      key: "paste",
+                      label: "Paste Text",
+                      icon: (
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9h6m-6 4h6" />
+                        </svg>
+                      ),
+                    },
+                  ].map((t) => (
                     <button
-                      type="submit"
-                      disabled={createJobMutation.isPending}
-                      className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#10b981] to-[#059669] px-6 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition disabled:cursor-not-allowed disabled:opacity-50"
+                      key={t.key}
+                      type="button"
+                      onClick={() => {
+                        setTab(t.key);
+                        setError("");
+                      }}
+                      className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                        tab === t.key
+                          ? "bg-gradient-to-r from-[#10b981] to-[#059669] text-white shadow-md shadow-emerald-500/20"
+                          : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      }`}
                     >
-                      {createJobMutation.isPending ? (
-                        <span className="flex items-center gap-2">
-                          <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                          </svg>
-                          AI is extracting job details...
-                        </span>
-                      ) : (
-                        "Extract & Save Job"
-                      )}
+                      {t.icon}
+                      {t.label}
                     </button>
-                  </form>
+                  ))}
                 </div>
+
+                <form onSubmit={handleJobSubmit} className="mt-6 space-y-4">
+                  {tab === "url" ? (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Job post URL
+                      </label>
+                      <input
+                        type="url"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
+                        placeholder="https://jobs.lever.co/company/job-id"
+                        className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/20"
+                      />
+                      <p className="mt-2 text-xs text-slate-500">
+                        ⚠ LinkedIn and Indeed block scraping — use Paste Text for those.
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Job description
+                      </label>
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Paste the full job description here..."
+                        rows={10}
+                        className="w-full resize-none rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/20"
+                      />
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="rounded-2xl bg-red-500/10 border border-red-400/30 px-4 py-3 text-sm text-red-200">
+                      {error}
+                    </div>
+                  )}
+
+                  {!resume && !resumeLoading && (
+                    <div className="rounded-2xl bg-amber-500/10 border border-amber-400/30 px-4 py-3 text-sm text-amber-200">
+                      ⚠ No resume uploaded — job will be saved but match score won't be calculated.
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={createJobMutation.isPending}
+                    className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#10b981] to-[#059669] px-6 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {createJobMutation.isPending ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                        AI is extracting job details...
+                      </span>
+                    ) : (
+                      "Extract & Save Job"
+                    )}
+                  </button>
+                </form>
               </div>
             </section>
           </div>
