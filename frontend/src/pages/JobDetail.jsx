@@ -6,11 +6,31 @@ import { createTailoredResume } from "../api/tailoredResumes";
 import UpgradeModal from "../components/UpgradeModal";
 
 const STATUS_OPTIONS = [
-  { value: "saved", label: "Saved", color: "bg-slate-100 text-slate-700 border-slate-200" },
-  { value: "applied", label: "Applied", color: "bg-sky-50 text-sky-700 border-sky-200" },
-  { value: "interview", label: "Interview", color: "bg-amber-50 text-amber-700 border-amber-200" },
-  { value: "offer", label: "Offer", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  { value: "rejected", label: "Rejected", color: "bg-rose-50 text-rose-700 border-rose-200" },
+  {
+    value: "saved",
+    label: "Saved",
+    color: "bg-slate-100 text-slate-700 border-slate-200",
+  },
+  {
+    value: "applied",
+    label: "Applied",
+    color: "bg-sky-50 text-sky-700 border-sky-200",
+  },
+  {
+    value: "interview",
+    label: "Interview",
+    color: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  {
+    value: "offer",
+    label: "Offer",
+    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  {
+    value: "rejected",
+    label: "Rejected",
+    color: "bg-rose-50 text-rose-700 border-rose-200",
+  },
 ];
 
 const PRIORITY_STYLES = {
@@ -43,7 +63,9 @@ function Section({ title, eyebrow, children }) {
 
 function Pill({ children, className = "" }) {
   return (
-    <span className={`rounded-full border px-3 py-1 text-xs font-black ${className}`}>
+    <span
+      className={`rounded-full border px-3 py-1 text-xs font-black ${className}`}
+    >
       {children}
     </span>
   );
@@ -66,7 +88,14 @@ function ScoreRing({ score }) {
     <div className="flex flex-col items-center gap-2">
       <div className="relative h-24 w-24">
         <svg className="h-24 w-24 -rotate-90" viewBox="0 0 36 36">
-          <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="3" />
+          <circle
+            cx="18"
+            cy="18"
+            r="15"
+            fill="none"
+            stroke="rgba(255,255,255,0.14)"
+            strokeWidth="3"
+          />
           <circle
             cx="18"
             cy="18"
@@ -79,7 +108,10 @@ function ScoreRing({ score }) {
             style={{ transition: "stroke-dasharray 1s ease" }}
           />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-xl font-black" style={{ color }}>
+        <span
+          className="absolute inset-0 flex items-center justify-center text-xl font-black"
+          style={{ color }}
+        >
           {score}%
         </span>
       </div>
@@ -154,7 +186,7 @@ export default function JobDetail() {
       }
 
       setTailorError(
-        err.response?.data?.detail || "Could not tailor this resume yet."
+        err.response?.data?.detail || "Could not tailor this resume yet.",
       );
     },
   });
@@ -162,9 +194,24 @@ export default function JobDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <svg className="h-8 w-8 animate-spin text-[#28a990]" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+        <svg
+          className="h-8 w-8 animate-spin text-[#28a990]"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v8z"
+          />
         </svg>
       </div>
     );
@@ -174,15 +221,21 @@ export default function JobDetail() {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <p className="text-sm font-semibold text-slate-500">Job not found</p>
-        <button onClick={() => navigate("/dashboard")} className="mt-4 text-sm font-black text-[#28a990] hover:underline">
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="mt-4 text-sm font-black text-[#28a990] hover:underline"
+        >
           Back to dashboard
         </button>
       </div>
     );
   }
 
-  const currentStatus = STATUS_OPTIONS.find((status) => status.value === job.status);
-  const canTailor = job.missing_skills?.length > 0 || job.keyword_gaps?.length > 0;
+  const currentStatus = STATUS_OPTIONS.find(
+    (status) => status.value === job.status,
+  );
+  const canTailor =
+    job.missing_skills?.length > 0 || job.keyword_gaps?.length > 0;
 
   return (
     <div
@@ -197,8 +250,18 @@ export default function JobDetail() {
         onClick={() => navigate("/dashboard")}
         className="mb-6 flex items-center gap-2 text-sm font-bold text-slate-500 transition-colors hover:text-[#101318]"
       >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
         Back to Dashboard
       </button>
@@ -218,25 +281,36 @@ export default function JobDetail() {
                 {job.title || "Untitled Role"}
               </h1>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-300">
-                <span className="font-bold text-slate-100">{job.company || "Unknown company"}</span>
+                <span className="font-bold text-slate-100">
+                  {job.company || "Unknown company"}
+                </span>
                 {job.location && <span className="text-slate-500">/</span>}
                 {job.location && <span>{job.location}</span>}
                 {job.location_type && <span className="text-slate-500">/</span>}
-                {job.location_type && <span className="capitalize">{job.location_type}</span>}
+                {job.location_type && (
+                  <span className="capitalize">{job.location_type}</span>
+                )}
                 {job.job_type && <span className="text-slate-500">/</span>}
-                {job.job_type && <span className="capitalize">{job.job_type.replace("-", " ")}</span>}
+                {job.job_type && (
+                  <span className="capitalize">
+                    {job.job_type.replace("-", " ")}
+                  </span>
+                )}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {job.salary_min && (
                   <Pill className="border-[#9bf6d7] bg-[#9bf6d7] text-[#06110f]">
                     {job.salary_currency} {job.salary_min.toLocaleString()}
-                    {job.salary_max ? ` - ${job.salary_max.toLocaleString()}` : "+"}
+                    {job.salary_max
+                      ? ` - ${job.salary_max.toLocaleString()}`
+                      : "+"}
                   </Pill>
                 )}
                 {job.experience_min && (
                   <Pill className="border-sky-200 bg-sky-50 text-sky-700">
                     {job.experience_min}
-                    {job.experience_max ? `-${job.experience_max}` : "+"} yrs exp
+                    {job.experience_max ? `-${job.experience_max}` : "+"} yrs
+                    exp
                   </Pill>
                 )}
                 {job.education && (
@@ -246,7 +320,12 @@ export default function JobDetail() {
                 )}
               </div>
               {job.source_url && (
-                <a href={job.source_url} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-[#9bf6d7] hover:underline">
+                <a
+                  href={job.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-[#9bf6d7] hover:underline"
+                >
                   View original job posting
                 </a>
               )}
@@ -266,7 +345,9 @@ export default function JobDetail() {
         </div>
 
         {(tailoredResume || tailorError) && (
-          <div className={`relative mt-5 rounded-2xl border px-4 py-3 text-xs font-bold ${tailoredResume ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-200" : "border-rose-300/30 bg-rose-500/10 text-rose-200"}`}>
+          <div
+            className={`relative mt-5 rounded-2xl border px-4 py-3 text-xs font-bold ${tailoredResume ? "border-emerald-300/30 bg-emerald-500/10 text-emerald-200" : "border-rose-300/30 bg-rose-500/10 text-rose-200"}`}
+          >
             {tailoredResume
               ? `Tailored draft ready. ${tailoredResume.unsupported_gaps?.length || 0} unsupported gaps kept out.`
               : tailorError}
@@ -320,7 +401,10 @@ export default function JobDetail() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {job.matched_skills.map((skill, index) => (
-                    <Pill key={index} className="border-[#9bf6d7] bg-[#9bf6d7] text-[#06110f]">
+                    <Pill
+                      key={index}
+                      className="border-[#9bf6d7] bg-[#9bf6d7] text-[#06110f]"
+                    >
                       {skill}
                     </Pill>
                   ))}
@@ -335,7 +419,12 @@ export default function JobDetail() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {job.missing_skills.map((skill, index) => (
-                    <Pill key={index} className={CATEGORY_STYLES[skill.category] || CATEGORY_STYLES.other}>
+                    <Pill
+                      key={index}
+                      className={
+                        CATEGORY_STYLES[skill.category] || CATEGORY_STYLES.other
+                      }
+                    >
                       {skill.name}
                     </Pill>
                   ))}
@@ -357,13 +446,26 @@ export default function JobDetail() {
               </p>
               <div className="space-y-3">
                 {job.keyword_gaps.map((gap, index) => (
-                  <div key={index} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/8 p-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div
+                    key={index}
+                    className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/8 p-4 sm:flex-row sm:items-start sm:justify-between"
+                  >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-black text-white">{gap.keyword}</span>
-                      <Pill className={CATEGORY_STYLES[gap.category] || CATEGORY_STYLES.other}>
+                      <span className="text-sm font-black text-white">
+                        {gap.keyword}
+                      </span>
+                      <Pill
+                        className={
+                          CATEGORY_STYLES[gap.category] || CATEGORY_STYLES.other
+                        }
+                      >
                         {gap.category}
                       </Pill>
-                      <Pill className={PRIORITY_STYLES[gap.priority] || PRIORITY_STYLES.low}>
+                      <Pill
+                        className={
+                          PRIORITY_STYLES[gap.priority] || PRIORITY_STYLES.low
+                        }
+                      >
                         {gap.priority} priority
                       </Pill>
                     </div>
@@ -402,9 +504,16 @@ export default function JobDetail() {
               ]
                 .filter((item) => item.value)
                 .map((item, index) => (
-                  <div key={index} className="flex items-start justify-between gap-4 border-b border-white/10 pb-3 last:border-0 last:pb-0">
-                    <span className="text-xs font-black uppercase tracking-[0.08em] text-slate-400">{item.label}</span>
-                    <span className="text-right text-xs font-bold capitalize text-white">{item.value}</span>
+                  <div
+                    key={index}
+                    className="flex items-start justify-between gap-4 border-b border-white/10 pb-3 last:border-0 last:pb-0"
+                  >
+                    <span className="text-xs font-black uppercase tracking-[0.08em] text-slate-400">
+                      {item.label}
+                    </span>
+                    <span className="text-right text-xs font-bold capitalize text-white">
+                      {item.value}
+                    </span>
                   </div>
                 ))}
             </div>
@@ -416,7 +525,15 @@ export default function JobDetail() {
                 {job.required_skills.map((skill, index) => {
                   const isMatched = job.matched_skills?.includes(skill.name);
                   return (
-                    <Pill key={index} className={isMatched ? "border-[#9bf6d7] bg-[#9bf6d7] text-[#06110f]" : CATEGORY_STYLES[skill.category] || CATEGORY_STYLES.other}>
+                    <Pill
+                      key={index}
+                      className={
+                        isMatched
+                          ? "border-[#9bf6d7] bg-[#9bf6d7] text-[#06110f]"
+                          : CATEGORY_STYLES[skill.category] ||
+                            CATEGORY_STYLES.other
+                      }
+                    >
                       {isMatched ? `Found: ${skill.name}` : skill.name}
                     </Pill>
                   );
@@ -429,7 +546,10 @@ export default function JobDetail() {
             <Section title="Preferred Skills">
               <div className="flex flex-wrap gap-2">
                 {job.preferred_skills.map((skill, index) => (
-                  <Pill key={index} className="border-white/10 bg-white/8 text-slate-200">
+                  <Pill
+                    key={index}
+                    className="border-white/10 bg-white/8 text-slate-200"
+                  >
                     {skill.name}
                   </Pill>
                 ))}
@@ -442,7 +562,10 @@ export default function JobDetail() {
               Danger Zone
             </p>
             {!showDeleteConfirm ? (
-              <button onClick={() => setShowDeleteConfirm(true)} className="w-full rounded-full border border-rose-300/30 bg-rose-500/10 py-2.5 text-xs font-black text-rose-200 transition hover:bg-rose-500/20">
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full rounded-full border border-rose-300/30 bg-rose-500/10 py-2.5 text-xs font-black text-rose-200 transition hover:bg-rose-500/20"
+              >
                 Delete this job
               </button>
             ) : (
@@ -451,10 +574,17 @@ export default function JobDetail() {
                   Are you sure? This cannot be undone.
                 </p>
                 <div className="flex gap-2">
-                  <button onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending} className="flex-1 rounded-full bg-rose-500 py-2.5 text-xs font-black text-white transition hover:bg-rose-600 disabled:opacity-50">
+                  <button
+                    onClick={() => deleteMutation.mutate()}
+                    disabled={deleteMutation.isPending}
+                    className="flex-1 rounded-full bg-rose-500 py-2.5 text-xs font-black text-white transition hover:bg-rose-600 disabled:opacity-50"
+                  >
                     {deleteMutation.isPending ? "Deleting..." : "Yes, delete"}
                   </button>
-                  <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 rounded-full border border-white/10 bg-white/8 py-2.5 text-xs font-black text-white transition hover:bg-white/12">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 rounded-full border border-white/10 bg-white/8 py-2.5 text-xs font-black text-white transition hover:bg-white/12"
+                  >
                     Cancel
                   </button>
                 </div>
