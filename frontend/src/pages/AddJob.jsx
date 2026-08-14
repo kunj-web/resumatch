@@ -80,7 +80,7 @@ export default function AddJob() {
     createJobMutation.mutate(
       tab === "url"
         ? { source_url: url.trim() }
-        : { raw_description: description.trim() }
+        : { raw_description: description.trim() },
     );
   };
 
@@ -102,11 +102,13 @@ export default function AddJob() {
               <p className="text-sm font-extrabold uppercase tracking-[0.18em] text-[#9bf6d7]">
                 AI Resume Matching
               </p>
-              <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[4.5rem]">
+              <h1 className="mt-4 text-4xl font-black tracking-tight !text-white sm:text-5xl md:text-6xl lg:text-[4.5rem]">
                 Add a job, upload your resume, and let Resumatch do the rest.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                Submit a job URL or paste the full description to extract role details automatically. Upload your resume to unlock match scores and gap insights.
+                Submit a job URL or paste the full description to extract role
+                details automatically. Upload your resume to unlock match scores
+                and gap insights.
               </p>
             </div>
           </div>
@@ -115,11 +117,12 @@ export default function AddJob() {
             <section className="rounded-[32px] border border-white/10 bg-white/10 p-6 sm:p-8 shadow-xl shadow-black/20 backdrop-blur-xl">
               <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center mb-5">
                 <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9bf6d7]">
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.12em] !text-white">
                     Resume Workspace
                   </h2>
                   <p className="mt-2 text-sm text-slate-300">
-                    Upload a resume for match scoring, tailored review, and accurate job fit.
+                    Upload a resume for match scoring, tailored review, and
+                    accurate job fit.
                   </p>
                 </div>
                 {resume && (
@@ -135,26 +138,41 @@ export default function AddJob() {
                   {resumeLoading
                     ? "Checking resume..."
                     : resume
-                    ? `Active resume: ${resume.file_name}`
-                    : "No resume uploaded yet."
-                  }
+                      ? `Active resume: ${resume.file_name}`
+                      : "No resume uploaded yet."}
                 </div>
                 <form onSubmit={handleResumeUpload} className="space-y-4">
                   <label className="flex min-h-[64px] flex-col justify-center gap-3 rounded-2xl border border-dashed border-slate-700 bg-slate-950/40 px-4 py-4 text-sm text-slate-300 transition hover:border-emerald-300 hover:bg-[#0f1c1c] cursor-pointer sm:flex-row sm:items-center sm:px-5 sm:py-4">
                     <div className="flex items-center gap-3">
-                      <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <svg
+                        className="h-5 w-5 text-slate-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
                       </svg>
-                      <span className={resumeFile ? "text-white" : "text-slate-300"}>
+                      <span
+                        className={resumeFile ? "text-white" : "text-slate-300"}
+                      >
                         {resumeFile
                           ? resumeFile.name
                           : resume
-                          ? "Upload a new resume (PDF or DOCX)"
-                          : "Choose a PDF or DOCX resume"
-                        }
+                            ? "Upload a new resume (PDF or DOCX)"
+                            : "Choose a PDF or DOCX resume"}
                       </span>
                     </div>
-                    <input type="file" accept=".pdf,.docx" className="hidden" onChange={(e) => setResumeFile(e.target.files[0])} />
+                    <input
+                      type="file"
+                      accept=".pdf,.docx"
+                      className="hidden"
+                      onChange={(e) => setResumeFile(e.target.files[0])}
+                    />
                   </label>
 
                   <button
@@ -163,9 +181,24 @@ export default function AddJob() {
                     className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#10b981] to-[#059669] px-6 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {uploadResumeMutation.isPending ? (
-                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      <svg
+                        className="animate-spin h-4 w-4 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
                       </svg>
                     ) : (
                       "Upload resume"
@@ -175,7 +208,8 @@ export default function AddJob() {
 
                 {resumeSuccess && (
                   <div className="mt-4 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 px-4 py-3 text-sm text-emerald-200">
-                    ✓ Resume uploaded successfully — match scores will now be calculated.
+                    ✓ Resume uploaded successfully — match scores will now be
+                    calculated.
                   </div>
                 )}
                 {uploadResumeMutation.isError && (
@@ -192,11 +226,14 @@ export default function AddJob() {
                   <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9bf6d7]">
                     Job Posting
                   </h2>
-                  <p className="mt-2 text-sm text-slate-300">
-                    Paste a job URL or description and AI will extract the full role details.
+                  <p className="mt-2 text-sm !text-white">
+                    Paste a job URL or description and AI will extract the full
+                    role details.
                   </p>
                 </div>
-                <span className="text-xs text-slate-400 justify-self-start sm:justify-self-end">{tab === "url" ? "URL mode" : "Text mode"}</span>
+                <span className="text-xs text-slate-400 justify-self-start sm:justify-self-end">
+                  {tab === "url" ? "URL mode" : "Text mode"}
+                </span>
               </div>
 
               <div className="rounded-[24px] border border-white/10 bg-[#0d1617] p-5">
@@ -212,8 +249,18 @@ export default function AddJob() {
                       key: "url",
                       label: "Paste URL",
                       icon: (
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5" />
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 01-5.656-5.656l1.5-1.5M10.172 13.828a4 4 0 010-5.656l3-3a4 4 0 015.656 5.656l-1.5 1.5"
+                          />
                         </svg>
                       ),
                     },
@@ -221,8 +268,18 @@ export default function AddJob() {
                       key: "paste",
                       label: "Paste Text",
                       icon: (
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9h6m-6 4h6" />
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9h6m-6 4h6"
+                          />
                         </svg>
                       ),
                     },
@@ -260,7 +317,8 @@ export default function AddJob() {
                         className="w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none transition focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/20"
                       />
                       <p className="mt-2 text-xs text-slate-500">
-                        ⚠ LinkedIn and Indeed block scraping — use Paste Text for those.
+                        ⚠ LinkedIn and Indeed block scraping — use Paste Text
+                        for those.
                       </p>
                     </div>
                   ) : (
@@ -286,7 +344,8 @@ export default function AddJob() {
 
                   {!resume && !resumeLoading && (
                     <div className="rounded-2xl bg-amber-500/10 border border-amber-400/30 px-4 py-3 text-sm text-amber-200">
-                      ⚠ No resume uploaded — job will be saved but match score won't be calculated.
+                      ⚠ No resume uploaded — job will be saved but match score
+                      won't be calculated.
                     </div>
                   )}
 
@@ -297,9 +356,24 @@ export default function AddJob() {
                   >
                     {createJobMutation.isPending ? (
                       <span className="flex items-center gap-2">
-                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        <svg
+                          className="animate-spin h-4 w-4 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                          />
                         </svg>
                         AI is extracting job details...
                       </span>
