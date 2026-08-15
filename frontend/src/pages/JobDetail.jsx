@@ -280,19 +280,23 @@ export default function JobDetail() {
               <h1 className="mt-2 text-3xl font-black leading-tight text-white sm:text-4xl">
                 {job.title || "Untitled Role"}
               </h1>
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-300">
-                <span className="font-bold text-slate-100">
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-semibold !text-white">
+                <span className="font-bold !text-white">
                   {job.company || "Unknown company"}
                 </span>
-                {job.location && <span className="text-slate-500">/</span>}
-                {job.location && <span>{job.location}</span>}
-                {job.location_type && <span className="text-slate-500">/</span>}
-                {job.location_type && (
-                  <span className="capitalize">{job.location_type}</span>
+                {job.location && <span className="!text-white">/</span>}
+                {job.location && (
+                  <span className="!text-white">{job.location}</span>
                 )}
-                {job.job_type && <span className="text-slate-500">/</span>}
+                {job.location_type && <span className="!text-white">/</span>}
+                {job.location_type && (
+                  <span className="capitalize !text-white">
+                    {job.location_type}
+                  </span>
+                )}
+                {job.job_type && <span className="!text-white">/</span>}
                 {job.job_type && (
-                  <span className="capitalize">
+                  <span className="capitalize !text-white">
                     {job.job_type.replace("-", " ")}
                   </span>
                 )}
