@@ -223,7 +223,7 @@ export default function AddJob() {
             <section className="rounded-[32px] border border-white/10 bg-white/10 p-6 shadow-xl shadow-black/20 backdrop-blur-xl">
               <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center mb-5">
                 <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9bf6d7]">
+                  <h2 className="text-sm font-semibold uppercase tracking-[0.12em] !text-white">
                     Job Posting
                   </h2>
                   <p className="mt-2 text-sm !text-white">
