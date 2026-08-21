@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AddJob from "./pages/AddJob";
+import CoverLetter from "./pages/CoverLetter";
 import JobDetail from "./pages/JobDetail";
 import TailoredResumeReview from "./pages/TailoredResumeReview";
 import Layout from "./components/Layout";
@@ -45,6 +46,14 @@ export default function App() {
             element={
               <PrivateRoute>
                 <AddJob />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/cover-letter"
+            element={
+              <PrivateRoute>
+                <CoverLetter />
               </PrivateRoute>
             }
           />
